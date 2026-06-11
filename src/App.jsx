@@ -230,28 +230,42 @@ const GLOBAL_CSS = `
     font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
   }
 
-  /* Drawer backdrop */
+  /* Modal backdrop */
   .drawer-backdrop {
     position: fixed; inset: 0; z-index: 200;
-    background: rgba(28,25,23,0.45);
-    backdrop-filter: blur(4px);
-    animation: backdropFadeIn 0.3s ease forwards;
+    background: rgba(28,25,23,0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: backdropFadeIn 0.25s ease forwards;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
   }
   .drawer-backdrop.closing {
-    animation: fadeIn 0.25s ease reverse forwards;
+    animation: backdropFadeIn 0.2s ease reverse forwards;
   }
 
-  /* Drawer panel */
+  /* Modal panel — centered */
   .drawer-panel {
-    position: fixed; top: 0; right: 0; bottom: 0;
-    width: min(560px, 100vw);
+    position: relative;
+    width: min(680px, 100%);
+    max-height: min(88vh, 860px);
     background: ${C.bgCard};
     z-index: 201;
     overflow-y: auto;
-    animation: drawerSlideIn 0.4s cubic-bezier(.32,.72,0,1) forwards;
+    border-radius: 28px;
+    box-shadow: 0 40px 120px -20px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1);
+    animation: modalPopIn 0.35s cubic-bezier(.32,.72,0,1) forwards;
   }
   .drawer-panel.closing {
-    animation: drawerSlideOut 0.3s cubic-bezier(.4,0,1,1) forwards;
+    animation: modalPopOut 0.22s cubic-bezier(.4,0,1,1) forwards;
+  }
+  @keyframes modalPopIn {
+    from { opacity: 0; transform: scale(0.92) translateY(16px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes modalPopOut {
+    from { opacity: 1; transform: scale(1) translateY(0); }
+    to   { opacity: 0; transform: scale(0.94) translateY(8px); }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -290,6 +304,136 @@ function useIsMobile() {
 /* ============================================================
    DRAWER COMPONENT
    ============================================================ */
+/* ============================================================
+   DRAWER CTA — Mini-Buchung direkt im Modal
+   ============================================================ */
+const CAL_EMBED_URL = "https://cal.com/beck-up/probestunde";
+
+function DrawerCTA({ onClose }) {
+  const [mode, setMode] = useState("options"); // options | cal | contact
+  const [calLoaded, setCalLoaded] = useState(false);
+
+  if (mode === "cal") {
+    return (
+      <div style={{ marginTop: 28 }}>
+        <button onClick={() => setMode("options")} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textDim, fontWeight: 600, marginBottom: 14, background: "none", border: "none", cursor: "pointer" }}>
+          ← Zurück
+        </button>
+        <div style={{ borderRadius: 16, overflow: "hidden", border: `1px solid ${C.border}`, background: C.bgWarm, position: "relative" }}>
+          {!calLoaded && (
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, background: C.bgWarm, zIndex: 1 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", border: `3px solid ${C.violetTint}`, borderTopColor: C.violet, animation: "rotate 0.8s linear infinite" }} />
+              <span style={{ fontSize: 14, color: C.textDim }}>Kalender wird geladen…</span>
+            </div>
+          )}
+          <iframe
+            src={CAL_EMBED_URL}
+            width="100%"
+            height="520"
+            frameBorder="0"
+            title="Termin buchen"
+            onLoad={() => setCalLoaded(true)}
+            style={{ display: "block", opacity: calLoaded ? 1 : 0, transition: "opacity 0.4s" }}
+          />
+        </div>
+        <p style={{ marginTop: 10, fontSize: 12, color: C.textDimmer, textAlign: "center" }}>
+          Probleme? <a href="tel:+49219171683" style={{ color: C.violet, fontWeight: 700 }}>+49 2191 71683</a>
+        </p>
+      </div>
+    );
+  }
+
+  if (mode === "contact") {
+    return (
+      <div style={{ marginTop: 28 }}>
+        <button onClick={() => setMode("options")} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, color: C.textDim, fontWeight: 600, marginBottom: 14, background: "none", border: "none", cursor: "pointer" }}>
+          ← Zurück
+        </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <a href="tel:+49219171683" style={{ display: "flex", gap: 14, alignItems: "center", padding: "16px 18px", borderRadius: 14, background: C.bgWarm, border: `1.5px solid ${C.border}`, transition: "border-color 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = C.violet}
+            onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: C.violetTint, display: "flex", alignItems: "center", justifyContent: "center", color: C.violet, flexShrink: 0 }}>
+              <Phone size={21} />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.textDimmer, letterSpacing: "0.5px", textTransform: "uppercase" }}>Anrufen</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>+49 2191 71683</div>
+            </div>
+          </a>
+          <a href="https://wa.me/491774246555" target="_blank" rel="noopener noreferrer"
+            style={{ display: "flex", gap: 14, alignItems: "center", padding: "16px 18px", borderRadius: 14, background: C.bgWarm, border: `1.5px solid ${C.border}`, transition: "border-color 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = "#25D366"}
+            onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: "#E8FBF0", display: "flex", alignItems: "center", justifyContent: "center", color: "#25D366", flexShrink: 0 }}>
+              <MessageCircle size={21} />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.textDimmer, letterSpacing: "0.5px", textTransform: "uppercase" }}>WhatsApp</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>+49 177 424 6555</div>
+            </div>
+          </a>
+          <a href="mailto:info@beck-up.com"
+            style={{ display: "flex", gap: 14, alignItems: "center", padding: "16px 18px", borderRadius: 14, background: C.bgWarm, border: `1.5px solid ${C.border}`, transition: "border-color 0.2s" }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = C.amber}
+            onMouseLeave={e => e.currentTarget.style.borderColor = C.border}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: C.amberTint, display: "flex", alignItems: "center", justifyContent: "center", color: C.amber, flexShrink: 0 }}>
+              <Mail size={21} />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.textDimmer, letterSpacing: "0.5px", textTransform: "uppercase" }}>E-Mail</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.text }}>info@beck-up.com</div>
+            </div>
+          </a>
+        </div>
+        <p style={{ marginTop: 12, fontSize: 12, color: C.textDimmer, textAlign: "center" }}>Mo–Fr 09–19 · Sa 10–14 Uhr</p>
+      </div>
+    );
+  }
+
+  // Default: options
+  return (
+    <div style={{ marginTop: 32 }}>
+      <div style={{ height: 1, background: C.border, marginBottom: 24 }} />
+      <div style={{ fontSize: 13, fontWeight: 700, color: C.textDimmer, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 14 }}>
+        Nächster Schritt
+      </div>
+      <div style={{ display: "grid", gap: 10 }}>
+        {/* Hauptoption: Termin buchen */}
+        <button onClick={() => setMode("cal")}
+          style={{ display: "flex", gap: 14, alignItems: "center", padding: "18px 20px", borderRadius: 16, background: C.violet, border: "none", cursor: "pointer", transition: "all 0.2s", textAlign: "left" }}
+          onMouseEnter={e => e.currentTarget.style.background = C.violetDk}
+          onMouseLeave={e => e.currentTarget.style.background = C.violet}>
+          <div style={{ width: 46, height: 46, borderRadius: 12, background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0 }}>
+            <Calendar size={23} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 16, color: "#fff" }}>Termin buchen</div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", marginTop: 2 }}>Freie Slots im Kalender wählen · Erste Stunde gratis</div>
+          </div>
+          <ArrowRight size={18} color="rgba(255,255,255,0.7)" />
+        </button>
+
+        {/* Sekundäroption: direkt Kontakt */}
+        <button onClick={() => setMode("contact")}
+          style={{ display: "flex", gap: 14, alignItems: "center", padding: "15px 20px", borderRadius: 14, background: C.bgWarm, border: `1.5px solid ${C.border}`, cursor: "pointer", transition: "all 0.2s", textAlign: "left" }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = C.violetLi; e.currentTarget.style.background = C.violetTint; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.background = C.bgWarm; }}>
+          <div style={{ width: 40, height: 40, borderRadius: 11, background: C.violetTint, display: "flex", alignItems: "center", justifyContent: "center", color: C.violet, flexShrink: 0 }}>
+            <Phone size={19} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: C.text }}>Direkt Kontakt aufnehmen</div>
+            <div style={{ fontSize: 13, color: C.textDim, marginTop: 1 }}>Telefon · WhatsApp · E-Mail</div>
+          </div>
+          <ArrowRight size={16} color={C.textDimmer} />
+        </button>
+      </div>
+      <p style={{ marginTop: 12, fontSize: 12, color: C.textDimmer, textAlign: "center" }}>Erste Stunde kostenlos · Kein Vertrag · Unverbindlich</p>
+    </div>
+  );
+}
+
 function Drawer({ item, onClose }) {
   const [closing, setClosing] = useState(false);
   const panelRef = useRef(null);
@@ -418,16 +562,8 @@ function Drawer({ item, onClose }) {
             </div>
           )}
 
-          {/* CTA */}
-          <div style={{ marginTop: 36, display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <a href="tel:+49219171683" className="btn-primary" style={{ flex: 1, justifyContent: "center" }}>
-              <Phone size={17} /> Jetzt anfragen
-            </a>
-            <a href="https://wa.me/491774246555" target="_blank" rel="noopener noreferrer" className="btn-outline" style={{ flex: 1, justifyContent: "center" }}>
-              <MessageCircle size={17} /> WhatsApp
-            </a>
-          </div>
-          <p style={{ marginTop: 12, fontSize: 12, color: C.textDimmer, textAlign: "center" }}>Erste Stunde kostenlos · Unverbindlich</p>
+          {/* CTA — Termin + Kontakt */}
+          <DrawerCTA onClose={close} />
         </div>
       </div>
     </>
