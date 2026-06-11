@@ -1,817 +1,829 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Phone, MessageCircle, Mail, ArrowRight, ArrowUp, Menu, X, Check,
-  ChevronDown, MapPin, Clock, Send, GraduationCap, Users, User, Laptop,
-  Sparkles, PartyPopper, CheckCircle2, AlertCircle, Quote,
+  Phone, MessageCircle, Mail, ArrowRight, ArrowUpRight, Menu, X,
+  ChevronDown, MapPin, Clock, Send, GraduationCap, Users, Laptop,
+  PartyPopper, CheckCircle2, AlertCircle, Dumbbell, Trophy, Star,
+  Zap, Globe, Heart, BookOpen, Target, Play,
 } from "lucide-react";
 
 /* ============================================================
-   DESIGN-SYSTEM
+   DESIGN TOKENS
    ============================================================ */
-const C = {
-  bg: "#FFFFFF",        bgAlt: "#F8F9FC",
-  surface: "#FFFFFF",   border: "#E2E8F0",   borderHi: "#CBD5E0",
+const T = {
+  // Dunkle Basis
+  bg:       "#06060f",
+  bg1:      "#0d0d1a",
+  bg2:      "#12122a",
+  surface:  "rgba(255,255,255,0.04)",
+  surfaceHi:"rgba(255,255,255,0.08)",
+  border:   "rgba(255,255,255,0.08)",
+  borderHi: "rgba(255,255,255,0.16)",
 
-  primary: "#1A1A2E",   primaryDk: "#0D0D1A", primaryLi: "#2D2D4E",
-  primaryTint: "#EEEEF5",
+  // Primärfarben
+  violet:   "#7c3aed",
+  violetLi: "#a78bfa",
+  violetDk: "#5b21b6",
+  cyan:     "#06b6d4",
+  cyanLi:   "#67e8f9",
+  pink:     "#ec4899",
+  pinkLi:   "#f9a8d4",
+  gold:     "#f59e0b",
+  goldLi:   "#fcd34d",
+  green:    "#10b981",
 
-  accent: "#E94560",    accentDk: "#C73050",  accentLi: "#FF6B84",
-  accentTint: "#FDEEF1",
-
-  gold: "#F5A623",      goldDk: "#D4891A",    goldLi: "#FFB94A",
-  goldTint: "#FEF3DC",
-
-  text: "#2D3748",      textDim: "#718096",   textVeryDim: "#A0AEC0",
-  textHi: "#1A202C",
+  // Text
+  text:     "#e2e8f0",
+  textDim:  "#94a3b8",
+  textDimmer:"#64748b",
+  white:    "#ffffff",
 };
 
 const FF = {
-  display: '"Bricolage Grotesque", system-ui, sans-serif',
-  body: '"Manrope", system-ui, sans-serif',
-  serif: '"Fraunces", Georgia, serif',
+  display: '"Inter", system-ui, sans-serif',
+  body:    '"Inter", system-ui, sans-serif',
 };
 
-const MAXW = 1180;
-const SHADOW_SM = "0 2px 10px -3px rgba(26,26,46,0.10)";
-const SHADOW_MD = "0 14px 32px -12px rgba(26,26,46,0.18)";
-const SHADOW_LG = "0 28px 54px -18px rgba(26,26,46,0.26)";
-const CLIP = "polygon(0 0, 100% 3%, 100% 100%, 0 97%)";
-
-/* ---- Kontaktdaten (zentral) ---- */
-const TEL = "+49 2191 71683";
-const TEL_HREF = "tel:+49219171683";
-const MOBIL = "+49 177 424 6555";
-const WA_HREF = "https://wa.me/491774246555";
-const MAIL = "info@beck-up.com";
-const MAIL_HREF = "mailto:info@beck-up.com";
-const WEB3FORMS_KEY = "DEIN_WEB3FORMS_KEY";
-
-const STANDORTE = [
-  { tag: "Hauptstandort", street: "Alleestr. 116", city: "Remscheid" },
-  { tag: "Standort", street: "Alleestr. 29", city: "Remscheid" },
-  { tag: "Remscheid-Lennep", street: "Bahnhofstr. 3", city: "Remscheid" },
-];
-
-const FAECHER = [
-  "Mathematik", "Deutsch", "Englisch", "Französisch", "Latein", "Spanisch",
-  "Physik", "Chemie", "Biologie", "Informatik", "Geschichte", "Erdkunde",
-  "Politik / SoWi", "Wirtschaft", "Rechnungswesen", "BWL / VWL",
-];
-
-const FADEN = [
-  { id: "hero", label: "Start", target: "scroll-hero" },
-  { id: "warum", label: "Warum wir?", target: "scroll-warum" },
-  { id: "angebote", label: "Angebote", target: "scroll-angebote" },
-  { id: "but", label: "Förderung", target: "scroll-but" },
-  { id: "ablauf", label: "So geht's", target: "scroll-ablauf" },
-  { id: "kontakt", label: "Kontakt", target: "scroll-kontakt" },
-];
-
 /* ============================================================
-   GLOBAL CSS (Reset + Keyframes + Hover-Utilities)
+   GLOBAL CSS
    ============================================================ */
 const GLOBAL_CSS = `
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body {
-  margin: 0; padding: 0;
-  background: ${C.bg}; color: ${C.text};
-  font-family: ${FF.body};
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  overflow-x: hidden;
-}
-a { text-decoration: none; color: inherit; }
-button { font-family: inherit; cursor: pointer; border: none; background: none; }
-input, select, textarea { font-family: inherit; }
-::selection { background: ${C.accent}; color: #fff; }
-:focus-visible { outline: 2px solid ${C.accent}; outline-offset: 2px; border-radius: 3px; }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-.bu-btn { transition: transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease, color .2s ease; }
-.bu-btn:hover { transform: translateY(-2px); }
-.bu-btn:active { transform: translateY(0); }
-
-.bu-card { transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s ease, border-color .25s ease; }
-.bu-card:hover { transform: translateY(-6px); box-shadow: ${SHADOW_LG}; border-color: ${C.borderHi}; }
-
-.bu-link { display: inline-flex; align-items: center; gap: 6px; transition: gap .2s ease, color .2s ease; }
-.bu-link:hover { gap: 12px; }
-
-.bu-navlink { position: relative; transition: color .2s ease; }
-.bu-navlink:hover { color: ${C.accent}; }
-
-.bu-row { transition: background .15s ease; }
-.bu-row:hover { background: ${C.bgAlt}; }
-
-.bu-tilt { transition: transform .3s cubic-bezier(.4,0,.2,1), box-shadow .3s ease; }
-.bu-tilt:hover { transform: rotate(0deg) translateY(-12px) scale(1.02) !important; box-shadow: ${SHADOW_LG} !important; z-index: 6; }
-
-.bu-marker:hover { background: ${C.accent}; }
-
-@keyframes floatA {
-  0%   { transform: translate(0,0) rotate(0deg); }
-  33%  { transform: translate(15px,-20px) rotate(3deg); }
-  66%  { transform: translate(-10px,15px) rotate(-2deg); }
-  100% { transform: translate(0,0) rotate(0deg); }
-}
-@keyframes floatB {
-  0%   { transform: translate(0,0) rotate(0deg); }
-  33%  { transform: translate(-18px,12px) rotate(-3deg); }
-  66%  { transform: translate(12px,-16px) rotate(2deg); }
-  100% { transform: translate(0,0) rotate(0deg); }
-}
-@keyframes floatC {
-  0%   { transform: translate(0,0) rotate(0deg); }
-  50%  { transform: translate(20px,18px) rotate(4deg); }
-  100% { transform: translate(0,0) rotate(0deg); }
-}
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(18px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes pulseFab {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245,166,35,0.45); }
-  50%      { box-shadow: 0 0 0 10px rgba(245,166,35,0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: .001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .001ms !important;
-    scroll-behavior: auto !important;
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: ${T.bg};
+    color: ${T.text};
+    font-family: ${FF.body};
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
-}
-`;
+  a { text-decoration: none; color: inherit; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; }
+  input, select, textarea { font-family: inherit; }
+  ::selection { background: ${T.violet}; color: #fff; }
+  :focus-visible { outline: 2px solid ${T.violet}; outline-offset: 3px; border-radius: 4px; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: ${T.bg}; }
+  ::-webkit-scrollbar-thumb { background: ${T.violet}; border-radius: 3px; }
 
-function GlobalStyles() {
-  // Fonts kommen aus main.jsx (fontsource) – kein Google-Request.
-  return <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />;
-}
+  @keyframes meshMove {
+    0%   { transform: translate(0,0) scale(1); }
+    33%  { transform: translate(40px,-30px) scale(1.08); }
+    66%  { transform: translate(-30px,20px) scale(0.95); }
+    100% { transform: translate(0,0) scale(1); }
+  }
+  @keyframes meshMove2 {
+    0%   { transform: translate(0,0) scale(1) rotate(0deg); }
+    50%  { transform: translate(-50px,40px) scale(1.12) rotate(8deg); }
+    100% { transform: translate(0,0) scale(1) rotate(0deg); }
+  }
+  @keyframes meshMove3 {
+    0%   { transform: translate(0,0) scale(1); }
+    40%  { transform: translate(30px,50px) scale(0.9); }
+    100% { transform: translate(0,0) scale(1); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-12px); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes lineGrow {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+  }
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s cubic-bezier(.4,0,.2,1), transform 0.7s cubic-bezier(.4,0,.2,1);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  .glass {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .glass:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.14);
+  }
+
+  .card-hover {
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1), box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 32px 64px -16px rgba(124,58,237,0.25);
+    border-color: rgba(124,58,237,0.4) !important;
+  }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 28px; border-radius: 12px;
+    font-weight: 700; font-size: 15px;
+    background: linear-gradient(135deg, ${T.violet}, ${T.cyan});
+    color: #fff;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+    box-shadow: 0 0 0 0 rgba(124,58,237,0);
+    border: none; cursor: pointer;
+    position: relative; overflow: hidden;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -8px rgba(124,58,237,0.6); }
+  .btn-primary:hover::before { opacity: 1; }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 26px; border-radius: 12px;
+    font-weight: 600; font-size: 15px;
+    background: rgba(255,255,255,0.06);
+    color: ${T.text};
+    border: 1px solid rgba(255,255,255,0.12);
+    transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
+
+  .gradient-text {
+    background: linear-gradient(135deg, ${T.violetLi}, ${T.cyanLi});
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .gradient-text-gold {
+    background: linear-gradient(135deg, ${T.gold}, ${T.pink});
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .shimmer-text {
+    background: linear-gradient(90deg, ${T.violetLi} 0%, ${T.cyanLi} 25%, ${T.white} 50%, ${T.cyanLi} 75%, ${T.violetLi} 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 4s linear infinite;
+  }
+
+  .nav-link {
+    font-size: 14px; font-weight: 500; color: ${T.textDim};
+    transition: color 0.2s; padding: 8px 0; position: relative;
+    background: none; border: none; cursor: pointer;
+  }
+  .nav-link:hover, .nav-link.active { color: ${T.white}; }
+  .nav-link.active::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, ${T.violet}, ${T.cyan});
+    border-radius: 2px;
+  }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  }
+
+  .stat-card {
+    border-radius: 20px; padding: 28px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    transition: all 0.3s ease;
+  }
+  .stat-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(124,58,237,0.3); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+    .reveal { opacity: 1; transform: none; }
+  }
+  @media (max-width: 768px) {
+    .hide-mobile { display: none !important; }
+  }
+  @media (min-width: 769px) {
+    .hide-desktop { display: none !important; }
+  }
+`;
 
 /* ============================================================
    HOOKS
    ============================================================ */
-function useIsMobile(breakpoint = 900) {
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== "undefined" ? window.innerWidth < breakpoint : false
-  );
+function useReveal() {
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
-    window.addEventListener("resize", onResize);
-    onResize();
-    return () => window.removeEventListener("resize", onResize);
-  }, [breakpoint]);
-  return isMobile;
-}
-
-function useScrollSpy(active) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    const els = FADEN
-      .map((s) => document.querySelector(`[data-scroll-id="${s.id}"]`))
-      .filter(Boolean);
-    if (!els.length) return;
+    const els = document.querySelectorAll(".reveal");
     const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const id = entry.target.getAttribute("data-scroll-id");
-            const idx = FADEN.findIndex((s) => s.id === id);
-            if (idx !== -1) setActiveIndex(idx);
-          }
-        });
-      },
-      { threshold: 0.4, rootMargin: "-12% 0px -12% 0px" }
+      (entries) => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); obs.unobserve(e.target); } }),
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
     );
-    els.forEach((el) => obs.observe(el));
+    els.forEach(el => obs.observe(el));
     return () => obs.disconnect();
-  }, [active]);
-  return activeIndex;
+  });
 }
 
-function useScrolled(offset = 400) {
-  const [scrolled, setScrolled] = useState(false);
+function useIsMobile() {
+  const [m, setM] = useState(typeof window !== "undefined" ? window.innerWidth < 768 : false);
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > offset);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [offset]);
-  return scrolled;
-}
-
-function jumpTo(targetId) {
-  const el = document.getElementById(targetId);
-  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    const h = () => setM(window.innerWidth < 768);
+    window.addEventListener("resize", h);
+    return () => window.removeEventListener("resize", h);
+  }, []);
+  return m;
 }
 
 /* ============================================================
-   LAYOUT-BAUSTEINE
+   MESH GRADIENT BACKGROUND
+   ============================================================ */
+function MeshGradient({ variant = "hero" }) {
+  const configs = {
+    hero: [
+      { color: "124,58,237", size: 700, top: "-10%", left: "-5%", anim: "meshMove 18s ease-in-out infinite", opacity: 0.35 },
+      { color: "6,182,212", size: 600, top: "20%", right: "-10%", anim: "meshMove2 22s ease-in-out infinite", opacity: 0.25 },
+      { color: "236,72,153", size: 500, bottom: "-5%", left: "30%", anim: "meshMove3 16s ease-in-out infinite", opacity: 0.2 },
+      { color: "245,158,11", size: 400, top: "40%", left: "15%", anim: "meshMove 24s ease-in-out infinite reverse", opacity: 0.12 },
+    ],
+    section: [
+      { color: "124,58,237", size: 500, top: "-20%", right: "10%", anim: "meshMove 20s ease-in-out infinite", opacity: 0.2 },
+      { color: "6,182,212", size: 400, bottom: "-10%", left: "5%", anim: "meshMove2 18s ease-in-out infinite", opacity: 0.15 },
+    ],
+  };
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
+      {configs[variant].map((b, i) => (
+        <div key={i} style={{
+          position: "absolute",
+          width: b.size, height: b.size,
+          top: b.top, left: b.left, right: b.right, bottom: b.bottom,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, rgba(${b.color},${b.opacity}) 0%, transparent 70%)`,
+          filter: "blur(40px)",
+          animation: b.anim,
+        }} />
+      ))}
+    </div>
+  );
+}
+
+/* ============================================================
+   LAYOUT
    ============================================================ */
 function Container({ children, style }) {
   return (
-    <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 24px", position: "relative", ...style }}>
+    <div style={{ maxWidth: 1140, margin: "0 auto", padding: "0 24px", position: "relative", zIndex: 1, ...style }}>
       {children}
     </div>
   );
 }
 
-const sectionPad = (isMobile, top = 0, bottom = 0) => ({
-  paddingTop: (isMobile ? 56 : 100) + top,
-  paddingBottom: (isMobile ? 56 : 100) + bottom,
-});
-
-/* Pill-Label über Headlines */
-function Pill({ children, color = C.accent }) {
-  const tint = color === C.gold ? C.goldTint : color === C.primary ? C.primaryTint : C.accentTint;
+function Section({ children, style, id }) {
   return (
-    <span
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 7,
-        padding: "6px 12px", borderRadius: 999, background: tint, color,
-        fontFamily: FF.body, fontSize: 9, fontWeight: 800,
-        letterSpacing: "2.5px", textTransform: "uppercase",
-      }}
-    >
-      <span style={{ width: 5, height: 5, borderRadius: "50%", background: color }} />
+    <section id={id} style={{ position: "relative", overflow: "hidden", ...style }}>
       {children}
-    </span>
+    </section>
   );
 }
 
-/* Zweizeilige gemischte Headline */
-function Headline({ line1, line2, size = "clamp(34px, 5vw, 56px)", style }) {
-  return (
-    <h2 style={{ margin: 0, lineHeight: 1.04, ...style }}>
-      <span style={{ display: "block", fontFamily: FF.display, fontWeight: 800, fontSize: size, color: C.primary, letterSpacing: "-0.02em" }}>
-        {line1}
-      </span>
-      <span style={{ display: "block", fontFamily: FF.serif, fontStyle: "italic", fontWeight: 500, fontSize: size, color: C.accent, letterSpacing: "-0.01em" }}>
-        {line2}
-      </span>
-    </h2>
-  );
-}
-
-/* Farbiger Marker statt Bullet */
-function Marker({ children, color = C.accent }) {
-  return (
-    <div style={{ display: "flex", gap: 14, alignItems: "flex-start", marginBottom: 16 }}>
-      <span style={{ flexShrink: 0, width: 4, height: 24, borderRadius: 2, background: color, marginTop: 3 }} />
-      <span style={{ fontFamily: FF.body, fontSize: 15.5, lineHeight: 1.6, color: C.text }}>{children}</span>
-    </div>
-  );
-}
-
-/* Große dekorative Hintergrundzahl */
-function DecoNumber({ n }) {
-  return (
-    <span
-      aria-hidden="true"
-      style={{
-        position: "absolute", top: -20, right: -10, lineHeight: 1,
-        fontSize: "clamp(120px, 20vw, 200px)", fontFamily: FF.display, fontWeight: 800,
-        color: C.primary, opacity: 0.04, userSelect: "none", pointerEvents: "none", zIndex: 0,
-      }}
-    >
-      {n}
-    </span>
-  );
-}
-
-/* Animierte Blobs */
-function Blobs({ mobile }) {
-  const s = mobile ? 0.6 : 1;
-  const base = {
-    position: "absolute", borderRadius: "60% 40% 70% 30% / 50% 60% 40% 70%",
-    filter: "blur(6px)", pointerEvents: "none",
-  };
-  return (
-    <div aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
-      <div style={{ ...base, width: 360 * s, height: 360 * s, background: C.accent, opacity: 0.12, top: "2%", right: "6%", animation: "floatA 12s ease-in-out infinite" }} />
-      <div style={{ ...base, width: 300 * s, height: 300 * s, background: C.gold, opacity: 0.1, bottom: "4%", left: "4%", animation: "floatB 14s ease-in-out infinite" }} />
-      {!mobile && (
-        <div style={{ ...base, width: 260, height: 260, background: C.primary, opacity: 0.08, top: "34%", left: "42%", animation: "floatC 16s ease-in-out infinite" }} />
-      )}
-    </div>
-  );
-}
-
-/* Button */
-function Button({ as = "button", variant = "primary", size = "md", href, target, onClick, children, style, fab }) {
-  const base = {
-    display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8,
-    fontFamily: FF.body, fontWeight: 700, borderRadius: 12,
-    minHeight: 48, minWidth: 44,
-    padding: size === "lg" ? "16px 28px" : "13px 20px",
-    fontSize: size === "lg" ? 16 : 14.5, lineHeight: 1,
-    border: "2px solid transparent", textAlign: "center", whiteSpace: "nowrap",
-  };
-  const variants = {
-    primary: { background: C.primary, color: "#fff" },
-    gold: { background: C.gold, color: C.primaryDk, boxShadow: "0 10px 24px -8px rgba(245,166,35,0.55)" },
-    accent: { background: C.accent, color: "#fff", boxShadow: "0 10px 24px -8px rgba(233,69,96,0.5)" },
-    ghost: { background: "transparent", color: C.primary, borderColor: C.borderHi },
-    light: { background: "#fff", color: C.primary, borderColor: C.border, boxShadow: SHADOW_SM },
-  };
-  const st = { ...base, ...variants[variant], ...style };
-  const rel = target === "_blank" ? "noopener noreferrer" : undefined;
-  if (as === "a") {
-    return <a className="bu-btn" href={href} target={target} rel={rel} onClick={onClick} style={st}>{children}</a>;
-  }
-  return <button className="bu-btn" onClick={onClick} style={st}>{children}</button>;
-}
-
-/* Fächer-Tag */
-function Tag({ children, color = C.primary }) {
-  const tint = color === C.gold ? C.goldTint : color === C.accent ? C.accentTint : C.primaryTint;
-  return (
-    <span style={{ display: "inline-block", padding: "7px 13px", borderRadius: 999, fontFamily: FF.body, fontSize: 13, fontWeight: 600, color, background: tint, border: `1px solid ${color === C.primary ? C.border : "transparent"}` }}>
-      {children}
-    </span>
-  );
-}
 /* ============================================================
-   NAVIGATION
+   NAV
    ============================================================ */
-function Logo({ onClick }) {
-  const [err, setErr] = useState(false);
-  return (
-    <button onClick={onClick} aria-label="beck-up – zur Startseite" style={{ display: "flex", alignItems: "center", gap: 10, padding: 0, minHeight: 44 }}>
-      {!err ? (
-        <img src="/logo.png" alt="beck-up" onError={() => setErr(true)} style={{ height: 40, width: "auto", display: "block" }} />
-      ) : (
-        <span style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 25, color: C.primary, letterSpacing: "-0.02em" }}>
-          beck<span style={{ color: C.accent }}>-</span>up
-        </span>
-      )}
-    </button>
-  );
-}
-
-const NAV_LINKS = [
+const NAV_ITEMS = [
   { key: "home", label: "Start" },
-  { key: "angebote", label: "Angebote" },
-  { key: "but", label: "Förderung" },
-  { key: "jobs", label: "Jobs" },
-  { key: "faq", label: "FAQ" },
+  { key: "learning", label: "Learning" },
+  { key: "elearning", label: "eLearning" },
+  { key: "sport", label: "Sport & Freizeit" },
+  { key: "preise", label: "Preise" },
   { key: "kontakt", label: "Kontakt" },
 ];
 
 function Nav({ page, setPage, isMobile }) {
+  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const go = (key) => { setPage(key); setOpen(false); };
-  useEffect(() => { if (!isMobile) setOpen(false); }, [isMobile]);
+
+  useEffect(() => {
+    const h = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", h, { passive: true });
+    return () => window.removeEventListener("scroll", h);
+  }, []);
+
+  const go = (key) => { setPage(key); setOpen(false); window.scrollTo({ top: 0, behavior: "auto" }); };
 
   return (
-    <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderBottom: `1px solid ${C.border}` }}>
+    <nav style={{
+      position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+      transition: "all 0.3s ease",
+      background: scrolled ? "rgba(6,6,15,0.85)" : "transparent",
+      backdropFilter: scrolled ? "blur(20px)" : "none",
+      borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent",
+    }}>
       <Container>
-        <div style={{ height: isMobile ? 56 : 68, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Logo onClick={() => go("home")} />
+        <div style={{ height: 68, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          {/* Logo */}
+          <button onClick={() => go("home")} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: "linear-gradient(135deg, #7c3aed, #06b6d4)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontWeight: 900, fontSize: 18, color: "#fff",
+            }}>b</div>
+            <span style={{ fontWeight: 800, fontSize: 20, color: T.white, letterSpacing: "-0.02em" }}>
+              beck<span style={{ color: T.violetLi }}>-</span>up
+            </span>
+          </button>
 
+          {/* Desktop Nav */}
           {!isMobile && (
-            <nav style={{ display: "flex", alignItems: "center", gap: 26 }}>
-              {NAV_LINKS.map((l) => (
-                <button key={l.key} className="bu-navlink" onClick={() => go(l.key)}
-                  style={{ fontFamily: FF.body, fontSize: 15, fontWeight: page === l.key ? 700 : 500, color: page === l.key ? C.accent : C.text, padding: "8px 0" }}>
-                  {l.label}
-                  {page === l.key && <span style={{ position: "absolute", left: 0, right: 0, bottom: 2, height: 2, background: C.accent, borderRadius: 2 }} />}
+            <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
+              {NAV_ITEMS.map(n => (
+                <button key={n.key} className={`nav-link${page === n.key ? " active" : ""}`} onClick={() => go(n.key)}>
+                  {n.label}
                 </button>
               ))}
-              <Button variant="gold" onClick={() => go("kontakt")} style={{ minHeight: 44, padding: "11px 18px" }}>
-                Probestunde
-              </Button>
-            </nav>
+            </div>
           )}
 
-          {isMobile && (
-            <button onClick={() => setOpen((o) => !o)} aria-label={open ? "Menü schließen" : "Menü öffnen"} aria-expanded={open}
-              style={{ width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", color: C.primary }}>
-              {open ? <X size={26} /> : <Menu size={26} />}
-            </button>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {!isMobile && (
+              <button className="btn-primary" onClick={() => go("kontakt")} style={{ padding: "10px 20px", fontSize: 14 }}>
+                Kostenlos starten <ArrowRight size={16} />
+              </button>
+            )}
+            {isMobile && (
+              <button onClick={() => setOpen(o => !o)} style={{ color: T.white, width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {open ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            )}
+          </div>
         </div>
       </Container>
 
+      {/* Mobile Menu */}
       {isMobile && (
-        <div style={{ overflow: "hidden", maxHeight: open ? 560 : 0, transition: "max-height .3s ease", background: C.bg, borderBottom: open ? `1px solid ${C.border}` : "none" }}>
+        <div style={{
+          overflow: "hidden",
+          maxHeight: open ? 500 : 0,
+          transition: "max-height 0.35s ease",
+          background: "rgba(6,6,15,0.98)",
+          backdropFilter: "blur(20px)",
+          borderTop: open ? "1px solid rgba(255,255,255,0.06)" : "none",
+        }}>
           <Container>
-            <div style={{ padding: "8px 0 18px" }}>
-              {NAV_LINKS.map((l) => (
-                <button key={l.key} onClick={() => go(l.key)} className="bu-row"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "16px 4px", borderBottom: `1px solid ${C.border}`, fontFamily: FF.body, fontSize: 17, fontWeight: page === l.key ? 700 : 600, color: page === l.key ? C.accent : C.text, minHeight: 44 }}>
-                  {l.label}
-                  <ArrowRight size={18} style={{ color: C.textVeryDim }} />
+            <div style={{ padding: "8px 0 20px" }}>
+              {NAV_ITEMS.map(n => (
+                <button key={n.key} onClick={() => go(n.key)} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  width: "100%", padding: "16px 0",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  color: page === n.key ? T.violetLi : T.text,
+                  fontWeight: 600, fontSize: 16,
+                }}>
+                  {n.label} <ArrowRight size={18} style={{ color: T.textDimmer }} />
                 </button>
               ))}
-              <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-                <Button as="a" href={TEL_HREF} variant="ghost" style={{ flex: 1 }}><Phone size={18} />Anrufen</Button>
-                <Button as="a" href={WA_HREF} target="_blank" variant="gold" style={{ flex: 1 }}><MessageCircle size={18} />WhatsApp</Button>
-              </div>
+              <button className="btn-primary" onClick={() => go("kontakt")} style={{ width: "100%", justifyContent: "center", marginTop: 16 }}>
+                Kostenlos starten <ArrowRight size={16} />
+              </button>
             </div>
           </Container>
         </div>
       )}
-    </header>
+    </nav>
   );
 }
-
-/* ============================================================
-   SCROLL-FADEN
-   ============================================================ */
-function ScrollThread({ activeIndex }) {
-  const progress = (activeIndex / (FADEN.length - 1)) * 100;
-  return (
-    <div style={{ position: "fixed", left: 24, top: "50%", transform: "translateY(-50%)", zIndex: 40, height: 280 }}>
-      <div style={{ position: "relative", width: 2, height: "100%", background: C.border }}>
-        <div style={{ position: "absolute", top: 0, left: 0, width: 2, height: `${progress}%`, background: C.accent, transition: "height .6s cubic-bezier(.4,0,.2,1)" }} />
-        {FADEN.map((s, i) => {
-          const isActive = i === activeIndex;
-          const top = (i / (FADEN.length - 1)) * 100;
-          return (
-            <div key={s.id} style={{ position: "absolute", top: `${top}%`, left: "50%", transform: "translate(-50%,-50%)", display: "flex", alignItems: "center" }}>
-              <button onClick={() => jumpTo(s.target)} aria-label={s.label}
-                style={{ width: 12, height: 12, borderRadius: 2, background: isActive ? C.accent : C.border, transform: `rotate(45deg) scale(${isActive ? 1.3 : 1})`, transition: "all .3s ease", boxShadow: isActive ? "0 0 0 4px rgba(233,69,96,0.15)" : "none", padding: 0 }} />
-              <span style={{ position: "absolute", left: 24, whiteSpace: "nowrap", fontFamily: FF.body, fontSize: 12, fontWeight: 700, color: C.primary, opacity: isActive ? 1 : 0, transform: isActive ? "translateX(0)" : "translateX(-8px)", transition: "all .3s ease", pointerEvents: "none" }}>
-                {s.label}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function ScrollProgressMobile({ activeIndex }) {
-  const progress = (activeIndex / (FADEN.length - 1)) * 100;
-  return (
-    <div style={{ position: "sticky", top: 56, zIndex: 39 }}>
-      <div style={{ position: "relative", height: 3, background: C.border, width: "100%" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, height: 3, width: `${progress}%`, background: `linear-gradient(90deg, ${C.accent}, ${C.gold})`, transition: "width .4s ease" }} />
-      </div>
-      <div style={{ display: "flex", justifyContent: "center", gap: 10, padding: "8px 0", background: C.bg, borderBottom: `1px solid ${C.border}` }}>
-        {FADEN.map((s, i) => (
-          <button key={s.id} onClick={() => jumpTo(s.target)} aria-label={s.label}
-            style={{ width: 8, height: 8, borderRadius: "50%", background: i === activeIndex ? C.accent : C.border, transform: `scale(${i === activeIndex ? 1.4 : 1})`, transition: "all .3s ease", padding: 0 }} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================
-   MOBILE BOTTOM-BAR + SCROLL-TO-TOP
-   ============================================================ */
-const barBtn = { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, minWidth: 64, minHeight: 44, color: C.primary };
-const barLbl = { fontSize: 10, fontWeight: 700, fontFamily: FF.body };
-
-function MobileBottomBar({ setPage }) {
-  return (
-    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45, height: "calc(64px + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)", background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: `1px solid ${C.border}`, boxShadow: "0 -8px 24px -4px rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "space-around" }}>
-      <a href={TEL_HREF} style={barBtn}>
-        <Phone size={22} /><span style={barLbl}>Anrufen</span>
-      </a>
-      <a href={WA_HREF} target="_blank" rel="noopener noreferrer"
-        style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, width: 56, height: 56, marginTop: -12, borderRadius: "50%", background: C.gold, color: C.primaryDk, boxShadow: "0 8px 20px -4px rgba(245,166,35,0.6)", animation: "pulseFab 2.6s ease-in-out infinite" }}>
-        <MessageCircle size={23} /><span style={{ fontSize: 9, fontWeight: 800, fontFamily: FF.body }}>WhatsApp</span>
-      </a>
-      <button onClick={() => setPage("kontakt")} style={barBtn}>
-        <Mail size={22} /><span style={barLbl}>Schreiben</span>
-      </button>
-    </div>
-  );
-}
-
-function ScrollToTop({ isMobile }) {
-  const show = useScrolled(400);
-  if (!show) return null;
-  return (
-    <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Nach oben scrollen"
-      style={{ position: "fixed", right: 20, bottom: isMobile ? 84 : 24, zIndex: 44, width: 48, height: 48, borderRadius: "50%", background: C.primary, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: SHADOW_MD, animation: "fadeUp .3s ease" }}>
-      <ArrowUp size={22} />
-    </button>
-  );
-}
-/* ============================================================
-   HOME-DATEN
-   ============================================================ */
-const WARUM = [
-  { tag: "01", title: "Seit 2003 in Remscheid", text: "Über 20 Jahre Nachhilfe an einem Ort. Wir kennen die Schulen hier, die Lehrpläne und die typischen Stolperstellen." },
-  { tag: "02", title: "Präsenz & Online", text: "Vor Ort an drei Standorten oder per Video von zuhause. Du entscheidest, was in deinen Alltag passt." },
-  { tag: "03", title: "Alle Klassen 1–13", text: "Vom Lesenlernen in der Grundschule bis zum Abitur. Eine Anlaufstelle, die mitwächst." },
-  { tag: "04", title: "Persönlich, kein Konzern", text: "Du sprichst mit Menschen, die deinen Namen kennen — nicht mit einer Hotline. Das macht den Unterschied." },
-];
-
-const ANGEBOTE = [
-  { icon: User, color: C.accent, title: "Einzelunterricht", text: "Eine Lehrkraft, ein Kind, volle Aufmerksamkeit. Der Stoff richtet sich nach deinem Tempo — nicht umgekehrt." },
-  { icon: Users, color: C.gold, title: "Gruppenunterricht", text: "Kleine Gruppen auf gleichem Niveau. Gemeinsam lernen, voneinander abschauen, und günstiger als Einzelunterricht." },
-  { icon: GraduationCap, color: C.primary, title: "Abi-Vorbereitung", text: "Gezielt auf die Prüfung. Wir gehen alte Klausuren durch, schließen Lücken und nehmen dir die Nervosität." },
-  { icon: Laptop, color: C.accent, title: "Online-Teaching", text: "Von zuhause, mit derselben Lehrkraft wie vor Ort. Seit 2020 erprobt — kein Notbehelf, sondern eine echte Option." },
-  { icon: PartyPopper, color: C.gold, title: "Abi-Night", text: "Die Nacht vor der Prüfung gemeinsam durcharbeiten. Unser Klassiker. Anstrengend, aber es wirkt." },
-];
-
-const ABLAUF = [
-  { n: "1", title: "Kontakt aufnehmen", text: "Ruf an, schreib per WhatsApp oder füll das Formular aus. Unverbindlich." },
-  { n: "2", title: "Beratungsgespräch", text: "Wir schauen zusammen, wo es hakt und was wirklich Sinn macht. Kostenlos." },
-  { n: "3", title: "Probestunde", text: "Dein Kind lernt die Lehrkraft kennen — ohne dass es etwas kostet." },
-  { n: "4", title: "Förderplan", text: "Passt die Chemie, machen wir einen Plan. Dann geht's los." },
-];
-
-const STIMMEN = [
-  { name: "Amelie", role: "Mutter, 8. Klasse", text: "Ehrlich, ich war skeptisch — zwei andere Anbieter hatten wir schon durch. Hier hat's zum ersten Mal geklickt. Meine Tochter geht freiwillig hin, und die Mathenote ist von 4 auf 2 hoch.", rot: -1.5, dy: 0 },
-  { name: "Luis", role: "Schüler, Abitur", text: "Ohne die Abi-Vorbereitung hätte ich den Mathe-LK nicht gepackt. Sie haben mir genau die Sachen erklärt, bei denen ich in der Schule komplett ausgestiegen bin. Ruhig, ohne Druck.", rot: 0.5, dy: -8 },
-  { name: "Daniel", role: "Vater, 6. Klasse", text: "Was ich gut finde: Man bekommt eine ehrliche Rückmeldung. Kein Schönreden. Mein Sohn weiß jetzt, wo er steht — und es wird besser.", rot: 2, dy: 4 },
-];
 
 /* ============================================================
    HERO
    ============================================================ */
-function HeroCard({ isMobile }) {
+function Hero({ setPage, isMobile }) {
+  useReveal();
+  const statsRef = useRef(null);
+  const [counts, setCounts] = useState([0, 0, 0, 0]);
+  const targets = [2003, 500, 3, 20];
+  const labels = ["Gegründet", "Schüler+", "Standorte", "Jahre Erfahrung"];
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      targets.forEach((target, i) => {
+        const start = Date.now();
+        const duration = 1800;
+        const tick = () => {
+          const elapsed = Date.now() - start;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          setCounts(prev => { const n = [...prev]; n[i] = Math.round(eased * target); return n; });
+          if (progress < 1) requestAnimationFrame(tick);
+        };
+        setTimeout(() => requestAnimationFrame(tick), i * 150);
+      });
+      observer.disconnect();
+    }, { threshold: 0.5 });
+    if (statsRef.current) observer.observe(statsRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="bu-card" style={{ position: "relative", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 24, padding: isMobile ? 24 : 30, boxShadow: SHADOW_LG }}>
-      <div style={{ position: "absolute", top: -14, right: 22 }}>
-        <span style={{ padding: "7px 13px", borderRadius: 999, background: C.primary, color: "#fff", fontFamily: FF.body, fontSize: 12, fontWeight: 700 }}>Seit 2003</span>
-      </div>
-      <Quote size={34} style={{ color: C.gold }} />
-      <p style={{ marginTop: 12, fontFamily: FF.serif, fontStyle: "italic", fontSize: isMobile ? 17 : 19, lineHeight: 1.5, color: C.textHi }}>
-        „Meine Tochter geht freiwillig hin — und die Mathenote ist von 4 auf 2 hoch.“
-      </p>
-      <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 38, height: 38, borderRadius: "50%", background: C.accentTint, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FF.display, fontWeight: 800, color: C.accent }}>A</div>
-        <div>
-          <div style={{ fontFamily: FF.body, fontSize: 14, fontWeight: 700, color: C.textHi }}>Amelie</div>
-          <div style={{ fontFamily: FF.body, fontSize: 12.5, color: C.textDim }}>Mutter, 8. Klasse</div>
+    <Section style={{ minHeight: "100vh", display: "flex", alignItems: "center", paddingTop: 68 }}>
+      <MeshGradient variant="hero" />
+
+      {/* Grid overlay */}
+      <div style={{
+        position: "absolute", inset: 0, zIndex: 0, opacity: 0.03,
+        backgroundImage: "linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)",
+        backgroundSize: "60px 60px",
+      }} />
+
+      <Container>
+        <div style={{ paddingTop: isMobile ? 60 : 80, paddingBottom: isMobile ? 60 : 100 }}>
+          {/* Badge */}
+          <div className="reveal" style={{ marginBottom: 28 }}>
+            <span className="tag" style={{
+              background: "rgba(124,58,237,0.15)", color: T.violetLi,
+              border: "1px solid rgba(124,58,237,0.3)",
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.violet, animation: "pulse 2s ease-in-out infinite" }} />
+              Remscheid seit 2003
+            </span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="reveal reveal-delay-1" style={{
+            fontSize: isMobile ? "clamp(42px,10vw,56px)" : "clamp(64px,6vw,96px)",
+            fontWeight: 900, lineHeight: 1.0, letterSpacing: "-0.03em",
+            color: T.white, maxWidth: 900,
+          }}>
+            Bildung,{" "}
+            <span className="gradient-text">die bewegt.</span>
+            <br />
+            <span style={{ color: T.textDim, fontWeight: 300 }}>Sport, der begeistert.</span>
+          </h1>
+
+          <p className="reveal reveal-delay-2" style={{
+            marginTop: 28, maxWidth: 560,
+            fontSize: isMobile ? 17 : 20, lineHeight: 1.65,
+            color: T.textDim, fontWeight: 400,
+          }}>
+            beck-up ist Remscheids persönlichster Bildungs- und Sportanbieter.
+            Nachhilfe Klasse 1–13, Online-Learning, Abi-Night, Tennis —
+            alles an einem Ort.
+          </p>
+
+          <div className="reveal reveal-delay-3" style={{ marginTop: 40, display: "flex", flexWrap: "wrap", gap: 14 }}>
+            <button className="btn-primary" onClick={() => setPage("learning")} style={{ fontSize: isMobile ? 15 : 16, padding: "15px 30px" }}>
+              Zum Nachhilfe-Angebot <ArrowRight size={18} />
+            </button>
+            <button className="btn-ghost" onClick={() => setPage("kontakt")} style={{ fontSize: isMobile ? 15 : 16 }}>
+              Kostenlose Probestunde
+            </button>
+          </div>
+
+          {/* Floating cards */}
+          {!isMobile && (
+            <div className="reveal reveal-delay-4" style={{ marginTop: 64, display: "flex", gap: 16, flexWrap: "wrap" }}>
+              {[
+                { icon: "⭐", text: "Super Nachhilfe! Abi-Night war top.", name: "Amelie", role: "Abiturientin" },
+                { icon: "🏆", text: "Meine Note von 4 auf 2 — in 3 Monaten.", name: "Luis", role: "Klasse 10" },
+                { icon: "💬", text: "Endlich jemand der meinem Kind zuhört.", name: "Familie D.", role: "Eltern" },
+              ].map((r, i) => (
+                <div key={i} className="glass card-hover" style={{
+                  borderRadius: 16, padding: "18px 20px", maxWidth: 240,
+                  animation: `float ${5 + i}s ease-in-out infinite`,
+                  animationDelay: `${i * 0.8}s`,
+                }}>
+                  <div style={{ fontSize: 22, marginBottom: 8 }}>{r.icon}</div>
+                  <p style={{ fontSize: 13, lineHeight: 1.55, color: T.textDim, fontStyle: "italic" }}>„{r.text}"</p>
+                  <div style={{ marginTop: 10, fontWeight: 700, fontSize: 13, color: T.white }}>{r.name}</div>
+                  <div style={{ fontSize: 11, color: T.textDimmer }}>{r.role}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Stats */}
+          <div ref={statsRef} className="reveal" style={{
+            marginTop: isMobile ? 48 : 72,
+            display: "grid",
+            gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+            gap: 2,
+          }}>
+            {targets.map((_, i) => (
+              <div key={i} className="stat-card" style={{ borderRadius: i === 0 ? "20px 4px 4px 20px" : i === 3 ? "4px 20px 20px 4px" : "4px", textAlign: "center" }}>
+                <div style={{ fontSize: isMobile ? 32 : 40, fontWeight: 900, letterSpacing: "-0.03em" }}>
+                  <span className="gradient-text">{counts[i].toLocaleString("de")}</span>
+                </div>
+                <div style={{ fontSize: 13, color: T.textDim, marginTop: 4, fontWeight: 500 }}>{labels[i]}</div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-      <div style={{ height: 1, background: C.border, margin: "20px 0" }} />
-      <div style={{ fontFamily: FF.body, fontSize: 11, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", color: C.textVeryDim, marginBottom: 10 }}>Beliebte Fächer</div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        {["Mathe", "Deutsch", "Englisch", "Physik", "Chemie", "Latein"].map((f, i) => (
-          <Tag key={f} color={i % 3 === 0 ? C.accent : i % 3 === 1 ? C.gold : C.primary}>{f}</Tag>
-        ))}
-      </div>
-      <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 14, background: C.bgAlt }}>
-        <Sparkles size={18} style={{ color: C.gold, flexShrink: 0 }} />
-        <span style={{ fontFamily: FF.body, fontSize: 13.5, fontWeight: 600, color: C.text }}>
-          <b style={{ color: C.primary }}>500+</b> Schüler haben hier schon gelernt
-        </span>
+      </Container>
+    </Section>
+  );
+}
+
+/* ============================================================
+   BEREICH-KARTE (Learning / eLearning / Sport)
+   ============================================================ */
+function BereichCard({ icon: Icon, title, sub, color, colorDk, items, cta, onClick, isMobile, delay = "" }) {
+  return (
+    <div className={`glass card-hover reveal ${delay}`} style={{
+      borderRadius: 24, overflow: "hidden", cursor: "pointer",
+      border: `1px solid rgba(255,255,255,0.08)`,
+    }} onClick={onClick}>
+      {/* Top bar */}
+      <div style={{ height: 4, background: `linear-gradient(90deg, ${color}, ${colorDk})` }} />
+      <div style={{ padding: isMobile ? 28 : 36 }}>
+        {/* Icon */}
+        <div style={{
+          width: 56, height: 56, borderRadius: 16,
+          background: `rgba(${hexToRgb(color)},0.15)`,
+          border: `1px solid rgba(${hexToRgb(color)},0.3)`,
+          display: "flex", alignItems: "center", justifyContent: "center", color,
+          marginBottom: 22,
+        }}>
+          <Icon size={28} />
+        </div>
+        <h3 style={{ fontSize: isMobile ? 24 : 28, fontWeight: 800, color: T.white, letterSpacing: "-0.02em" }}>{title}</h3>
+        <p style={{ marginTop: 10, fontSize: 15, lineHeight: 1.65, color: T.textDim }}>{sub}</p>
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 10 }}>
+          {items.map((item, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
+              <span style={{ fontSize: 14, color: T.textDim }}>{item}</span>
+            </div>
+          ))}
+        </div>
+        <button onClick={onClick} style={{
+          marginTop: 28, display: "inline-flex", alignItems: "center", gap: 6,
+          fontSize: 14, fontWeight: 700, color,
+          background: "none", border: "none", cursor: "pointer",
+          transition: "gap 0.2s ease",
+        }}
+          onMouseEnter={e => e.currentTarget.style.gap = "12px"}
+          onMouseLeave={e => e.currentTarget.style.gap = "6px"}
+        >
+          {cta} <ArrowUpRight size={16} />
+        </button>
       </div>
     </div>
   );
 }
 
-function HeroSection({ setPage, isMobile }) {
-  const big = isMobile ? "clamp(36px,9vw,52px)" : "clamp(48px,5.5vw,72px)";
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `${r},${g},${b}`;
+}
+
+/* ============================================================
+   HOME — BEREICHE SECTION
+   ============================================================ */
+function BereicheSection({ setPage, isMobile }) {
+  useReveal();
   return (
-    <section id="scroll-hero" data-scroll-id="hero" style={{ position: "relative", background: C.bg, overflow: "hidden", ...sectionPad(isMobile, isMobile ? 0 : 20, 0) }}>
-      <Blobs mobile={isMobile} />
+    <Section style={{ padding: isMobile ? "80px 0" : "120px 0", background: T.bg1 }}>
+      <MeshGradient variant="section" />
       <Container>
-        <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.2fr 1fr", gap: isMobile ? 32 : 48, alignItems: "center" }}>
-          <div>
-            <Pill color={C.accent}>Nachhilfe in Remscheid · seit 2003</Pill>
-            <div style={{ height: 20 }} />
-            <h1 style={{ margin: 0, lineHeight: 1.02 }}>
-              <span style={{ display: "block", fontFamily: FF.display, fontWeight: 800, fontSize: big, color: C.primary, letterSpacing: "-0.025em" }}>Dein Weg nach oben —</span>
-              <span style={{ display: "block", fontFamily: FF.serif, fontStyle: "italic", fontWeight: 500, fontSize: big, color: C.accent, letterSpacing: "-0.01em" }}>mit beck-up.</span>
-            </h1>
-            <p style={{ marginTop: 20, maxWidth: 520, fontFamily: FF.body, fontSize: isMobile ? 16 : 18, lineHeight: 1.6, color: C.textDim }}>
-              Nachhilfe Klasse 1–13, Abi-Vorbereitung und Online-Teaching in Remscheid. Persönlich. Wirkungsvoll.
+        <div className="reveal" style={{ textAlign: "center", maxWidth: 640, margin: "0 auto 64px" }}>
+          <span className="tag" style={{ background: "rgba(6,182,212,0.12)", color: T.cyanLi, border: "1px solid rgba(6,182,212,0.25)", marginBottom: 20, display: "inline-flex" }}>
+            Alles unter einem Dach
+          </span>
+          <h2 style={{ fontSize: isMobile ? 36 : 52, fontWeight: 900, letterSpacing: "-0.03em", color: T.white, lineHeight: 1.08 }}>
+            Drei Bereiche.<br />
+            <span className="gradient-text">Eine Adresse.</span>
+          </h2>
+          <p style={{ marginTop: 18, fontSize: 17, lineHeight: 1.65, color: T.textDim }}>
+            beck-up ist mehr als Nachhilfe. Hier kannst du lernen, online studieren und Sport treiben — alles in Remscheid.
+          </p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20 }}>
+          <BereichCard
+            icon={BookOpen} color={T.violet} colorDk={T.cyan}
+            title="Learning" sub="Persönliche Nachhilfe von Klasse 1 bis 13. Einzel, Gruppe oder Abi-Night — du entscheidest."
+            items={["Einzelunterricht", "Gruppenunterricht", "Abi-Vorbereitung", "Alle Fächer"]}
+            cta="Mehr erfahren" onClick={() => setPage("learning")}
+            isMobile={isMobile} delay="reveal-delay-1"
+          />
+          <BereichCard
+            icon={Globe} color={T.cyan} colorDk="#0891b2"
+            title="eLearning" sub="Dieselbe Qualität, ohne Anfahrt. Online-Unterricht der wirklich funktioniert — seit 2020."
+            items={["Video-Unterricht", "Digitale Tafel", "Flexible Zeiten", "Alle Fächer"]}
+            cta="Mehr erfahren" onClick={() => setPage("elearning")}
+            isMobile={isMobile} delay="reveal-delay-2"
+          />
+          <BereichCard
+            icon={Dumbbell} color={T.gold} colorDk="#d97706"
+            title="Sport & Freizeit" sub="Tennis, Training, Bewegung. Unsere Coaches bringen dich auf das nächste Level."
+            items={["Tennistraining", "Verbandslizenzen", "Für alle Altersgruppen", "Mehrere Standorte"]}
+            cta="Mehr erfahren" onClick={() => setPage("sport")}
+            isMobile={isMobile} delay="reveal-delay-3"
+          />
+        </div>
+      </Container>
+    </Section>
+  );
+}
+
+/* ============================================================
+   HOME — ABOUT ANDREAS BECK
+   ============================================================ */
+function AboutSection({ isMobile }) {
+  useReveal();
+  return (
+    <Section style={{ padding: isMobile ? "80px 0" : "120px 0" }}>
+      <Container>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 48 : 80, alignItems: "center" }}>
+          <div className="reveal">
+            <span className="tag" style={{ background: "rgba(245,158,11,0.12)", color: T.goldLi, border: "1px solid rgba(245,158,11,0.25)", marginBottom: 24, display: "inline-flex" }}>
+              Über uns
+            </span>
+            <h2 style={{ fontSize: isMobile ? 36 : 48, fontWeight: 900, letterSpacing: "-0.03em", color: T.white, lineHeight: 1.1 }}>
+              Andreas Beck.<br />
+              <span className="gradient-text-gold">Made in Remscheid.</span>
+            </h2>
+            <p style={{ marginTop: 22, fontSize: 16, lineHeight: 1.8, color: T.textDim }}>
+              beck-up ist kein anonymes Franchise. Hinter allem steht Andreas Beck — seit 2003 in Remscheid, mit echtem Interesse an Menschen und echter Leidenschaft für Bildung.
             </p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 28 }}>
-              <Button variant="gold" size="lg" onClick={() => setPage("kontakt")}>Kostenlose Probestunde <ArrowRight size={18} /></Button>
-              <Button variant="ghost" size="lg" onClick={() => setPage("angebote")}>Angebote</Button>
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: isMobile ? "10px 18px" : "12px 24px", marginTop: 32 }}>
-              {["Seit 2003", "Alle Klassen", "Präsenz & Online", "Persönlich"].map((t) => (
-                <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontFamily: FF.body, fontSize: 13.5, fontWeight: 600, color: C.text }}>
-                  <Check size={15} strokeWidth={3} style={{ color: C.gold }} />{t}
+            <p style={{ marginTop: 14, fontSize: 16, lineHeight: 1.8, color: T.textDim }}>
+              Stimmt die Atmosphäre, entwickeln Menschen Freude an dem was sie tun. Das ist unser Prinzip — in jedem Unterrichtsraum, auf jedem Tennisplatz.
+            </p>
+            <div style={{ marginTop: 32, display: "flex", flexWrap: "wrap", gap: 12 }}>
+              {["Seit 2003", "Made in Remscheid", "Persönlich", "3 Standorte"].map(t => (
+                <span key={t} className="tag" style={{ background: "rgba(255,255,255,0.05)", color: T.textDim, border: "1px solid rgba(255,255,255,0.08)" }}>
+                  {t}
                 </span>
               ))}
             </div>
           </div>
-          <div style={{ marginTop: isMobile ? 0 : -30 }}>
-            <HeroCard isMobile={isMobile} />
-          </div>
-        </div>
-      </Container>
-    </section>
-  );
-}
 
-/* ============================================================
-   WARUM
-   ============================================================ */
-function WarumSection({ isMobile }) {
-  return (
-    <section id="scroll-warum" data-scroll-id="warum" style={{ position: "relative", background: C.bgAlt, clipPath: isMobile ? undefined : CLIP, overflow: "hidden", ...sectionPad(isMobile, isMobile ? 0 : 40, isMobile ? 0 : 40) }}>
-      <Container>
-        <DecoNumber n="02" />
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 560 }}>
-          <Pill color={C.gold}>Warum beck-up</Pill>
-          <div style={{ height: 18 }} />
-          <Headline line1="Gute Gründe," line2="hier zu lernen." size={isMobile ? "clamp(30px,7vw,40px)" : "clamp(36px,4vw,52px)"} />
-        </div>
-        <div style={{ position: "relative", zIndex: 1, marginTop: isMobile ? 32 : 48, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(4, 1fr)", gap: isMobile ? 16 : 20 }}>
-          {WARUM.map((w, i) => (
-            <div key={w.tag} className="bu-card" style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, padding: isMobile ? 22 : 24, boxShadow: SHADOW_SM, marginTop: !isMobile && i % 2 === 1 ? 28 : 0 }}>
-              <div style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 30, color: i % 2 === 0 ? C.accent : C.gold }}>{w.tag}</div>
-              <h3 style={{ marginTop: 12, fontFamily: FF.display, fontWeight: 700, fontSize: 18, color: C.primary, lineHeight: 1.25 }}>{w.title}</h3>
-              <p style={{ marginTop: 10, fontFamily: FF.body, fontSize: 14, lineHeight: 1.6, color: C.textDim }}>{w.text}</p>
-            </div>
-          ))}
-        </div>
-      </Container>
-    </section>
-  );
-}
-
-/* ============================================================
-   ANGEBOTE-TEASER
-   ============================================================ */
-function AngeboteTeaser({ setPage, isMobile }) {
-  return (
-    <section id="scroll-angebote" data-scroll-id="angebote" style={{ position: "relative", background: C.bg, overflow: "hidden", ...sectionPad(isMobile) }}>
-      <Container>
-        <DecoNumber n="03" />
-        <div style={{ position: "relative", zIndex: 1, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 20 }}>
-          <div style={{ maxWidth: 560 }}>
-            <Pill color={C.accent}>Unser Angebot</Pill>
-            <div style={{ height: 18 }} />
-            <Headline line1="Für jedes Fach," line2="für jede Klasse." size={isMobile ? "clamp(30px,7vw,40px)" : "clamp(36px,4vw,52px)"} />
-          </div>
-          {!isMobile && <Button variant="ghost" onClick={() => setPage("angebote")}>Alle Angebote <ArrowRight size={18} /></Button>}
-        </div>
-        <div style={{ position: "relative", zIndex: 1, marginTop: isMobile ? 32 : 48, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(210px, 1fr))", gap: isMobile ? 16 : 20 }}>
-          {ANGEBOTE.map((a) => {
-            const Icon = a.icon;
-            const tint = a.color === C.gold ? C.goldTint : a.color === C.primary ? C.primaryTint : C.accentTint;
-            return (
-              <div key={a.title} className="bu-card" style={{ position: "relative", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, overflow: "hidden", boxShadow: SHADOW_SM }}>
-                <div style={{ height: 5, background: a.color }} />
-                <div style={{ padding: isMobile ? 22 : 24 }}>
-                  <div style={{ width: 46, height: 46, borderRadius: 12, background: tint, display: "flex", alignItems: "center", justifyContent: "center", color: a.color }}>
-                    <Icon size={24} />
+          {/* Timeline */}
+          <div className="reveal reveal-delay-2">
+            <div style={{ position: "relative", paddingLeft: 32 }}>
+              <div style={{ position: "absolute", left: 10, top: 0, bottom: 0, width: 2, background: "linear-gradient(180deg, transparent, rgba(124,58,237,0.6), rgba(6,182,212,0.6), transparent)" }} />
+              {[
+                { year: "2003", text: "Gründung: Bildung und Tennis in Remscheid", color: T.violet },
+                { year: "2011", text: "Start beck-up eLearning — digitale Zukunft", color: T.cyan },
+                { year: "2017", text: "Zweiter Standort Alleestraße", color: T.violet },
+                { year: "2018", text: "Dritter Standort Remscheid-Lennep", color: T.cyan },
+                { year: "2020", text: "Online-Teaching geht live", color: T.pink },
+                { year: "2025", text: "Ausbildungsbetrieb + Standort Alleestr. 116", color: T.gold },
+              ].map((e, i) => (
+                <div key={i} style={{ display: "flex", gap: 20, marginBottom: 28, position: "relative" }}>
+                  <div style={{
+                    position: "absolute", left: -32, top: 4,
+                    width: 16, height: 16, borderRadius: "50%",
+                    background: e.color, boxShadow: `0 0 12px ${e.color}`,
+                    flexShrink: 0,
+                  }} />
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: e.color, letterSpacing: "1px", marginBottom: 4 }}>{e.year}</div>
+                    <div style={{ fontSize: 14, color: T.textDim, lineHeight: 1.5 }}>{e.text}</div>
                   </div>
-                  <h3 style={{ marginTop: 16, fontFamily: FF.display, fontWeight: 700, fontSize: 19, color: C.primary }}>{a.title}</h3>
-                  <p style={{ marginTop: 8, fontFamily: FF.body, fontSize: 14, lineHeight: 1.6, color: C.textDim }}>{a.text}</p>
-                  <button onClick={() => setPage("angebote")} className="bu-link" style={{ marginTop: 14, fontFamily: FF.body, fontSize: 14, fontWeight: 700, color: a.color }}>
-                    Mehr erfahren <ArrowRight size={16} />
-                  </button>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-        {isMobile && (
-          <div style={{ marginTop: 24 }}>
-            <Button variant="ghost" onClick={() => setPage("angebote")} style={{ width: "100%" }}>Alle Angebote <ArrowRight size={18} /></Button>
-          </div>
-        )}
-      </Container>
-    </section>
-  );
-}
-
-/* ============================================================
-   BUT-TEASER
-   ============================================================ */
-function ButTeaser({ setPage, isMobile }) {
-  return (
-    <section id="scroll-but" data-scroll-id="but" style={{ position: "relative", background: C.bgAlt, clipPath: isMobile ? undefined : CLIP, overflow: "hidden", ...sectionPad(isMobile, isMobile ? 0 : 40, isMobile ? 0 : 40) }}>
-      <Container>
-        <DecoNumber n="04" />
-        <div style={{ position: "relative", zIndex: 1, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 28 : 48, alignItems: "center" }}>
-          <div>
-            <Pill color={C.gold}>Bildung & Teilhabe</Pill>
-            <div style={{ height: 18 }} />
-            <Headline line1="Nachhilfe kostet —" line2="für viele aber nichts." size={isMobile ? "clamp(27px,6.2vw,36px)" : "clamp(32px,3.4vw,44px)"} />
-            <p style={{ marginTop: 20, fontFamily: FF.body, fontSize: 16, lineHeight: 1.65, color: C.textDim, maxWidth: 480 }}>
-              Über das Bildungs- und Teilhabepaket (BuT) übernimmt der Staat die Kosten für Lernförderung — wenn bestimmte Voraussetzungen erfüllt sind. Viele Familien wissen gar nicht, dass ihnen das zusteht.
-            </p>
-            <div style={{ marginTop: 22 }}>
-              <Marker color={C.gold}>Wir prüfen mit dir, ob ein Anspruch besteht.</Marker>
-              <Marker color={C.gold}>Wir helfen beim Antrag bei der Stadt Remscheid.</Marker>
-            </div>
-          </div>
-          <div style={{ background: `linear-gradient(135deg, ${C.gold}, ${C.goldDk})`, borderRadius: 24, padding: isMobile ? 28 : 36, color: "#fff", boxShadow: "0 24px 48px -18px rgba(212,137,26,0.5)" }}>
-            <div style={{ fontFamily: FF.body, fontSize: 11, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", opacity: 0.85 }}>Gut zu wissen</div>
-            <h3 style={{ marginTop: 12, fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 24 : 28, lineHeight: 1.2 }}>Nachhilfe kann staatlich gefördert werden.</h3>
-            <p style={{ marginTop: 14, fontFamily: FF.body, fontSize: 15.5, lineHeight: 1.6, opacity: 0.95 }}>Wir beraten kostenlos und unverbindlich. Ein Anruf reicht.</p>
-            <div style={{ marginTop: 24 }}>
-              <Button variant="light" onClick={() => setPage("but")} style={{ background: "#fff", color: C.goldDk }}>Mehr zur Förderung <ArrowRight size={18} /></Button>
+              ))}
             </div>
           </div>
         </div>
       </Container>
-    </section>
+    </Section>
   );
 }
 
 /* ============================================================
-   ABLAUF
+   HOME — STIMMEN
    ============================================================ */
-function AblaufSection({ isMobile }) {
-  return (
-    <section id="scroll-ablauf" data-scroll-id="ablauf" style={{ position: "relative", background: C.bg, overflow: "hidden", ...sectionPad(isMobile) }}>
-      <Container>
-        <div style={{ maxWidth: 560 }}>
-          <Pill color={C.accent}>So einfach geht's</Pill>
-          <div style={{ height: 18 }} />
-          <Headline line1="In vier Schritten" line2="zur ersten Stunde." size={isMobile ? "clamp(28px,6.5vw,38px)" : "clamp(34px,3.6vw,48px)"} />
-        </div>
-        {isMobile ? (
-          <div style={{ marginTop: 36, position: "relative", paddingLeft: 4 }}>
-            <div style={{ position: "absolute", left: 23, top: 12, bottom: 12, width: 2, background: `repeating-linear-gradient(${C.borderHi} 0 6px, transparent 6px 12px)` }} />
-            {ABLAUF.map((s) => (
-              <div key={s.n} style={{ position: "relative", display: "flex", gap: 18, marginBottom: 28 }}>
-                <div style={{ flexShrink: 0, width: 40, height: 40, borderRadius: "50%", background: C.primary, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FF.display, fontWeight: 800, fontSize: 18, zIndex: 1 }}>{s.n}</div>
-                <div>
-                  <h3 style={{ fontFamily: FF.display, fontWeight: 700, fontSize: 18, color: C.primary }}>{s.title}</h3>
-                  <p style={{ marginTop: 6, fontFamily: FF.body, fontSize: 14.5, lineHeight: 1.6, color: C.textDim }}>{s.text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ marginTop: 56, position: "relative", display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 24 }}>
-            <div style={{ position: "absolute", left: "12%", right: "12%", top: 31, height: 2, background: `repeating-linear-gradient(90deg, ${C.borderHi} 0 8px, transparent 8px 16px)` }} />
-            {ABLAUF.map((s) => (
-              <div key={s.n} style={{ position: "relative", textAlign: "center" }}>
-                <div style={{ margin: "0 auto", width: 64, height: 64, borderRadius: "50%", background: C.primary, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FF.display, fontWeight: 800, fontSize: 26, position: "relative", zIndex: 1, boxShadow: SHADOW_MD }}>{s.n}</div>
-                <h3 style={{ marginTop: 18, fontFamily: FF.display, fontWeight: 700, fontSize: 18, color: C.primary }}>{s.title}</h3>
-                <p style={{ marginTop: 8, fontFamily: FF.body, fontSize: 14, lineHeight: 1.6, color: C.textDim, maxWidth: 220, marginLeft: "auto", marginRight: "auto" }}>{s.text}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </Container>
-    </section>
-  );
-}
+const REVIEWS = [
+  { text: "Super gute Nachhilfe sowohl live als auch online! Vor allem die Abiturvorbereitung kann ich nur empfehlen. Danke Andy!", name: "Amelie", role: "Google-Rezension", stars: 5 },
+  { text: "Die Aufgaben nochmals durchzugehen, war sehr gut für das Verständnis. Sehr gute Stunde.", name: "Luis", role: "Gruppennachhilfe online", stars: 5 },
+  { text: "Ausführlich, nicht zu schnell und gut strukturiert.", name: "Daniel", role: "Einzel-Teaching online", stars: 5 },
+  { text: "Gute Alternative in dieser Zeit! Hat mir sehr geholfen, danke 🙂", name: "Pia", role: "Einzel-Teaching online", stars: 5 },
+  { text: "Es war sehr gut und hilfreich! Ich hoffe wir können es mehrmals wiederholen.", name: "Mohamad Yaman", role: "Abi-Night", stars: 5 },
+];
 
-/* ============================================================
-   TESTIMONIALS
-   ============================================================ */
-function TestimonialsSection({ isMobile }) {
+function StimmenSection({ isMobile }) {
+  useReveal();
   return (
-    <section style={{ position: "relative", background: C.bgAlt, overflow: "hidden", ...sectionPad(isMobile) }}>
+    <Section style={{ padding: isMobile ? "80px 0" : "120px 0", background: T.bg1, overflow: "hidden" }}>
+      <MeshGradient variant="section" />
       <Container>
-        <span aria-hidden="true" style={{ position: "absolute", top: -34, left: 6, fontFamily: FF.serif, fontWeight: 600, fontSize: "clamp(160px,26vw,300px)", color: C.gold, opacity: 0.1, lineHeight: 1, userSelect: "none", pointerEvents: "none" }}>„</span>
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 560 }}>
-          <Pill color={C.gold}>Echte Stimmen</Pill>
-          <div style={{ height: 18 }} />
-          <Headline line1="Was Schüler und Eltern" line2="über uns sagen." size={isMobile ? "clamp(28px,6.5vw,38px)" : "clamp(34px,3.6vw,48px)"} />
+        <div className="reveal" style={{ textAlign: "center", marginBottom: 56 }}>
+          <span className="tag" style={{ background: "rgba(236,72,153,0.12)", color: T.pinkLi, border: "1px solid rgba(236,72,153,0.25)", marginBottom: 20, display: "inline-flex" }}>
+            Echte Stimmen
+          </span>
+          <h2 style={{ fontSize: isMobile ? 36 : 52, fontWeight: 900, letterSpacing: "-0.03em", color: T.white }}>
+            Was unsere<br /><span className="gradient-text">Community sagt.</span>
+          </h2>
         </div>
-        <div style={{ position: "relative", zIndex: 1, marginTop: isMobile ? 32 : 64, display: isMobile ? "block" : "grid", gridTemplateColumns: isMobile ? undefined : "repeat(3,1fr)", gap: isMobile ? 0 : 28, alignItems: "start" }}>
-          {STIMMEN.map((s) => (
-            <div key={s.name} className={isMobile ? "bu-card" : "bu-tilt"} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 22, padding: isMobile ? 26 : 28, boxShadow: SHADOW_MD, marginBottom: isMobile ? 18 : 0, transform: isMobile ? "none" : `rotate(${s.rot}deg) translateY(${s.dy}px)` }}>
-              <Quote size={30} style={{ color: C.gold }} />
-              <p style={{ marginTop: 12, fontFamily: FF.serif, fontStyle: "italic", fontSize: 17, lineHeight: 1.55, color: C.textHi }}>{s.text}</p>
-              <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 11 }}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: C.accentTint, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FF.display, fontWeight: 800 }}>{s.name[0]}</div>
+
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20 }}>
+          {REVIEWS.slice(0, isMobile ? 3 : 5).map((r, i) => (
+            <div key={i} className={`glass card-hover reveal reveal-delay-${Math.min(i + 1, 4)}`}
+              style={{ borderRadius: 20, padding: 28, gridColumn: !isMobile && i === 3 ? "1 / 2" : !isMobile && i === 4 ? "2 / 3" : undefined }}>
+              <div style={{ display: "flex", gap: 2, marginBottom: 16 }}>
+                {Array(r.stars).fill(0).map((_, s) => <Star key={s} size={15} fill={T.gold} color={T.gold} />)}
+              </div>
+              <p style={{ fontSize: 15, lineHeight: 1.7, color: T.text, fontStyle: "italic" }}>„{r.text}"</p>
+              <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: "50%",
+                  background: "linear-gradient(135deg, #7c3aed, #06b6d4)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontWeight: 800, fontSize: 15, color: "#fff", flexShrink: 0,
+                }}>{r.name[0]}</div>
                 <div>
-                  <div style={{ fontFamily: FF.body, fontSize: 14.5, fontWeight: 700, color: C.textHi }}>{s.name}</div>
-                  <div style={{ fontFamily: FF.body, fontSize: 12.5, color: C.textDim }}>{s.role}</div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: T.white }}>{r.name}</div>
+                  <div style={{ fontSize: 12, color: T.textDimmer }}>{r.role}</div>
                 </div>
               </div>
             </div>
           ))}
         </div>
-        {isMobile && <div style={{ marginTop: 8, fontFamily: FF.body, fontSize: 11, color: C.textDim }}>← Mehr Stimmen findest du auf Google</div>}
       </Container>
-    </section>
+    </Section>
   );
 }
 
 /* ============================================================
-   CTA-BANNER
+   HOME — CTA
    ============================================================ */
-function CtaBanner({ setPage, isMobile }) {
-  const big = isMobile ? "clamp(30px,8vw,44px)" : "clamp(40px,4.5vw,60px)";
+function CtaSection({ setPage, isMobile }) {
+  useReveal();
   return (
-    <section id="scroll-kontakt" data-scroll-id="kontakt" style={{ position: "relative", background: C.primary, clipPath: isMobile ? undefined : CLIP, overflow: "hidden", ...sectionPad(isMobile, isMobile ? 10 : 40, isMobile ? 10 : 40) }}>
-      <div aria-hidden="true" style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
-        <div style={{ position: "absolute", width: 340, height: 340, borderRadius: "60% 40% 70% 30% / 50% 60% 40% 70%", background: C.accent, opacity: 0.18, top: "-10%", right: "6%", filter: "blur(8px)", animation: "floatA 13s ease-in-out infinite" }} />
-        <div style={{ position: "absolute", width: 280, height: 280, borderRadius: "60% 40% 70% 30% / 50% 60% 40% 70%", background: C.gold, opacity: 0.14, bottom: "-12%", left: "8%", filter: "blur(8px)", animation: "floatB 15s ease-in-out infinite" }} />
-      </div>
+    <Section style={{ padding: isMobile ? "80px 0" : "120px 0" }}>
+      <MeshGradient variant="hero" />
       <Container>
-        <div style={{ position: "relative", zIndex: 1, textAlign: "center", maxWidth: 680, margin: "0 auto" }}>
-          <Pill color={C.gold}>Erste Stunde gratis</Pill>
-          <div style={{ height: 20 }} />
-          <h2 style={{ margin: 0, lineHeight: 1.05 }}>
-            <span style={{ display: "block", fontFamily: FF.display, fontWeight: 800, fontSize: big, color: "#fff", letterSpacing: "-0.02em" }}>Bereit, besser</span>
-            <span style={{ display: "block", fontFamily: FF.serif, fontStyle: "italic", fontWeight: 500, fontSize: big, color: C.goldLi }}>zu werden?</span>
+        <div className="reveal" style={{
+          textAlign: "center", maxWidth: 700, margin: "0 auto",
+          padding: isMobile ? "48px 28px" : "72px 48px",
+          borderRadius: 32,
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          backdropFilter: "blur(20px)",
+        }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: 20, margin: "0 auto 28px",
+            background: "linear-gradient(135deg, #7c3aed, #06b6d4)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            animation: "float 4s ease-in-out infinite",
+          }}>
+            <Zap size={34} color="#fff" />
+          </div>
+          <h2 style={{ fontSize: isMobile ? 34 : 52, fontWeight: 900, letterSpacing: "-0.03em", color: T.white, lineHeight: 1.1 }}>
+            Bereit loszulegen?<br />
+            <span className="shimmer-text">Die erste Stunde ist gratis.</span>
           </h2>
-          <p style={{ marginTop: 18, fontFamily: FF.body, fontSize: isMobile ? 16 : 18, lineHeight: 1.6, color: "rgba(255,255,255,0.8)" }}>Die erste Stunde ist kostenlos. Wir freuen uns auf dich.</p>
-          <div style={{ marginTop: 30, display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center" }}>
-            <Button variant="gold" size="lg" onClick={() => setPage("kontakt")}>Probestunde buchen <ArrowRight size={18} /></Button>
-            <Button as="a" href={TEL_HREF} variant="light" size="lg" style={{ background: "rgba(255,255,255,0.1)", color: "#fff", borderColor: "rgba(255,255,255,0.25)" }}><Phone size={18} />Anrufen</Button>
-            <Button as="a" href={WA_HREF} target="_blank" variant="light" size="lg" style={{ background: "rgba(255,255,255,0.1)", color: "#fff", borderColor: "rgba(255,255,255,0.25)" }}><MessageCircle size={18} />WhatsApp</Button>
+          <p style={{ marginTop: 20, fontSize: 17, lineHeight: 1.65, color: T.textDim, maxWidth: 480, margin: "20px auto 0" }}>
+            Kein Vertrag, kein Risiko. Lern die Lehrkraft kennen — und dann entscheide in Ruhe.
+          </p>
+          <div style={{ marginTop: 36, display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center" }}>
+            <button className="btn-primary" onClick={() => setPage("kontakt")} style={{ fontSize: isMobile ? 15 : 16, padding: "16px 32px" }}>
+              Probestunde buchen <ArrowRight size={18} />
+            </button>
+            <a href="tel:+49219171683" className="btn-ghost" style={{ fontSize: isMobile ? 15 : 16 }}>
+              <Phone size={18} /> +49 2191 71683
+            </a>
           </div>
         </div>
       </Container>
-    </section>
+    </Section>
   );
 }
 
@@ -819,250 +831,84 @@ function CtaBanner({ setPage, isMobile }) {
    HOME
    ============================================================ */
 function Home({ setPage, isMobile }) {
-  const activeIndex = useScrollSpy(true);
   return (
     <main>
-      {!isMobile && <ScrollThread activeIndex={activeIndex} />}
-      {isMobile && <ScrollProgressMobile activeIndex={activeIndex} />}
-      <HeroSection setPage={setPage} isMobile={isMobile} />
-      <WarumSection isMobile={isMobile} />
-      <AngeboteTeaser setPage={setPage} isMobile={isMobile} />
-      <ButTeaser setPage={setPage} isMobile={isMobile} />
-      <AblaufSection isMobile={isMobile} />
-      <TestimonialsSection isMobile={isMobile} />
-      <CtaBanner setPage={setPage} isMobile={isMobile} />
+      <Hero setPage={setPage} isMobile={isMobile} />
+      <BereicheSection setPage={setPage} isMobile={isMobile} />
+      <AboutSection isMobile={isMobile} />
+      <StimmenSection isMobile={isMobile} />
+      <CtaSection setPage={setPage} isMobile={isMobile} />
+      <Footer setPage={setPage} isMobile={isMobile} />
     </main>
   );
 }
-/* ============================================================
-   FORMULAR-BAUSTEINE (Web3Forms, ohne <form>-Tag)
-   ============================================================ */
-const inputStyle = {
-  width: "100%", padding: "12px 14px", borderRadius: 12, border: `1.5px solid ${C.border}`,
-  fontFamily: FF.body, fontSize: 15, color: C.textHi, background: "#fff", outline: "none", minHeight: 48,
-};
-const labelStyle = { display: "block", fontFamily: FF.body, fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 7 };
-
-function Field({ label, required, children }) {
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={labelStyle}>{label}{required && <span style={{ color: C.accent }}> *</span>}</label>
-      {children}
-    </div>
-  );
-}
-
-function StatusNote({ type, children }) {
-  const ok = type === "success";
-  return (
-    <div style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "14px 16px", borderRadius: 12, marginTop: 16, background: ok ? C.goldTint : C.accentTint, border: `1px solid ${ok ? C.gold : C.accent}` }}>
-      {ok ? <CheckCircle2 size={20} style={{ color: C.goldDk, flexShrink: 0 }} /> : <AlertCircle size={20} style={{ color: C.accentDk, flexShrink: 0 }} />}
-      <span style={{ fontFamily: FF.body, fontSize: 14, lineHeight: 1.5, color: ok ? C.goldDk : C.accentDk, fontWeight: 600 }}>{children}</span>
-    </div>
-  );
-}
-
-function SuccessBox({ title, text, onReset }) {
-  return (
-    <div style={{ textAlign: "center", padding: "36px 22px", borderRadius: 20, background: C.bgAlt, border: `1px solid ${C.border}` }}>
-      <div style={{ width: 64, height: 64, borderRadius: "50%", background: C.goldTint, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}>
-        <CheckCircle2 size={34} style={{ color: C.goldDk }} />
-      </div>
-      <h3 style={{ marginTop: 18, fontFamily: FF.display, fontWeight: 800, fontSize: 24, color: C.primary }}>{title}</h3>
-      <p style={{ marginTop: 10, fontFamily: FF.body, fontSize: 15.5, lineHeight: 1.6, color: C.textDim, maxWidth: 420, marginInline: "auto" }}>{text}</p>
-      <button onClick={onReset} className="bu-link" style={{ marginTop: 18, fontFamily: FF.body, fontSize: 14, fontWeight: 700, color: C.accent }}>
-        Noch eine Anfrage senden <ArrowRight size={16} />
-      </button>
-    </div>
-  );
-}
-
-async function postWeb3Forms(payload) {
-  const res = await fetch("https://api.web3forms.com/submit", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ access_key: WEB3FORMS_KEY, from_name: "beck-up Website", ...payload }),
-  });
-  return res.json();
-}
-
-function ContactForm({ compact }) {
-  const empty = { parent: "", student: "", klasse: "", fach: "", phone: "", email: "", message: "", source: "" };
-  const [form, setForm] = useState(empty);
-  const [status, setStatus] = useState("idle");
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  const submit = async () => {
-    if (status === "sending") return;
-    if (!form.parent || !form.email || !form.message) { setStatus("validation"); return; }
-    setStatus("sending");
-    try {
-      const data = await postWeb3Forms({
-        subject: "Neue Anfrage über beck-up.com",
-        "Name Erziehungsberechtigte/r": form.parent,
-        "Name des Kindes": form.student,
-        Klasse: form.klasse, Fach: form.fach,
-        Telefon: form.phone, "E-Mail": form.email,
-        Anliegen: form.message, "Gefunden über": form.source,
-      });
-      if (data.success) { setStatus("success"); setForm(empty); } else setStatus("error");
-    } catch { setStatus("error"); }
-  };
-
-  if (status === "success") {
-    return <SuccessBox onReset={() => setStatus("idle")} title="Danke — deine Anfrage ist da." text="Wir melden uns so schnell wie möglich, meistens noch am selben Tag. Wenn's eilt, ruf einfach an." />;
-  }
-
-  return (
-    <div>
-      <div style={{ display: "grid", gridTemplateColumns: compact ? "1fr" : "1fr 1fr", gap: "0 16px" }}>
-        <Field label="Name (Erziehungsberechtigte/r)" required><input style={inputStyle} value={form.parent} onChange={set("parent")} placeholder="Vor- und Nachname" /></Field>
-        <Field label="Name des Kindes"><input style={inputStyle} value={form.student} onChange={set("student")} placeholder="optional" /></Field>
-        <Field label="Klasse">
-          <select style={inputStyle} value={form.klasse} onChange={set("klasse")}>
-            <option value="">Bitte wählen</option>
-            {Array.from({ length: 13 }, (_, i) => i + 1).map((k) => <option key={k} value={`${k}. Klasse`}>{k}. Klasse</option>)}
-          </select>
-        </Field>
-        <Field label="Fach">
-          <select style={inputStyle} value={form.fach} onChange={set("fach")}>
-            <option value="">Bitte wählen</option>
-            {FAECHER.map((f) => <option key={f} value={f}>{f}</option>)}
-            <option value="Mehrere Fächer">Mehrere Fächer</option>
-          </select>
-        </Field>
-        <Field label="Telefon"><input style={inputStyle} type="tel" value={form.phone} onChange={set("phone")} placeholder="Für den Rückruf" /></Field>
-        <Field label="E-Mail" required><input style={inputStyle} type="email" value={form.email} onChange={set("email")} placeholder="name@beispiel.de" /></Field>
-      </div>
-      <Field label="Dein Anliegen" required>
-        <textarea style={{ ...inputStyle, minHeight: 120, resize: "vertical" }} value={form.message} onChange={set("message")} placeholder="Worum geht's? Welches Fach, welche Klasse, was läuft gerade nicht rund?" />
-      </Field>
-      <Field label="Wie hast du von uns gehört?">
-        <select style={inputStyle} value={form.source} onChange={set("source")}>
-          <option value="">Bitte wählen</option>
-          <option>Google-Suche</option>
-          <option>Empfehlung</option>
-          <option>Social Media</option>
-          <option>Bin schon Kunde</option>
-          <option>Sonstiges</option>
-        </select>
-      </Field>
-      {status === "validation" && <StatusNote type="error">Bitte fülle mindestens Name, E-Mail und dein Anliegen aus.</StatusNote>}
-      {status === "error" && <StatusNote type="error">Da ist leider etwas schiefgegangen. Versuch's nochmal oder ruf uns direkt an.</StatusNote>}
-      <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-        <Button variant="accent" size="lg" onClick={submit} style={{ minWidth: 200, opacity: status === "sending" ? 0.7 : 1 }}>
-          {status === "sending" ? "Wird gesendet…" : <>Anfrage senden <Send size={17} /></>}
-        </Button>
-        <span style={{ fontFamily: FF.body, fontSize: 12.5, color: C.textDim }}>Unverbindlich. Wir melden uns persönlich.</span>
-      </div>
-    </div>
-  );
-}
-
-function JobForm() {
-  const empty = { name: "", email: "", phone: "", subjects: "", grades: "", about: "" };
-  const [form, setForm] = useState(empty);
-  const [status, setStatus] = useState("idle");
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-
-  const submit = async () => {
-    if (status === "sending") return;
-    if (!form.name || !form.email || !form.subjects) { setStatus("validation"); return; }
-    setStatus("sending");
-    try {
-      const data = await postWeb3Forms({
-        subject: "Neue Bewerbung als Nachhilfelehrkraft – beck-up.com",
-        Name: form.name, "E-Mail": form.email, Telefon: form.phone,
-        Fächer: form.subjects, Klassenstufen: form.grades, "Über dich": form.about,
-      });
-      if (data.success) { setStatus("success"); setForm(empty); } else setStatus("error");
-    } catch { setStatus("error"); }
-  };
-
-  if (status === "success") {
-    return <SuccessBox onReset={() => setStatus("idle")} title="Danke für deine Bewerbung!" text="Wir schauen sie uns an und melden uns bei dir. Das kann ein paar Tage dauern — wir lesen aber wirklich jede." />;
-  }
-
-  return (
-    <div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
-        <Field label="Dein Name" required><input style={inputStyle} value={form.name} onChange={set("name")} placeholder="Vor- und Nachname" /></Field>
-        <Field label="E-Mail" required><input style={inputStyle} type="email" value={form.email} onChange={set("email")} placeholder="name@beispiel.de" /></Field>
-        <Field label="Telefon"><input style={inputStyle} type="tel" value={form.phone} onChange={set("phone")} placeholder="optional" /></Field>
-        <Field label="Fächer" required><input style={inputStyle} value={form.subjects} onChange={set("subjects")} placeholder="z. B. Mathe, Physik" /></Field>
-      </div>
-      <Field label="Welche Klassenstufen traust du dir zu?"><input style={inputStyle} value={form.grades} onChange={set("grades")} placeholder="z. B. 5–10, oder Oberstufe" /></Field>
-      <Field label="Erzähl uns kurz von dir">
-        <textarea style={{ ...inputStyle, minHeight: 120, resize: "vertical" }} value={form.about} onChange={set("about")} placeholder="Studierst du? Hast du schon Nachhilfe gegeben? Warum hast du Lust darauf?" />
-      </Field>
-      {status === "validation" && <StatusNote type="error">Bitte gib mindestens Name, E-Mail und deine Fächer an.</StatusNote>}
-      {status === "error" && <StatusNote type="error">Das hat nicht geklappt. Versuch's nochmal oder schreib uns direkt an info@beck-up.com.</StatusNote>}
-      <div style={{ marginTop: 8 }}>
-        <Button variant="primary" size="lg" onClick={submit} style={{ minWidth: 200, opacity: status === "sending" ? 0.7 : 1 }}>
-          {status === "sending" ? "Wird gesendet…" : <>Bewerbung absenden <Send size={17} /></>}
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 /* ============================================================
-   SEITEN-HEADER
+   PAGE HEADER (für Unterseiten)
    ============================================================ */
-function PageHeader({ pill, pillColor = C.accent, line1, line2, sub, isMobile }) {
+function PageHeader({ tag, tagColor, title, titleAccent, sub, isMobile }) {
+  useReveal();
   return (
-    <section style={{ position: "relative", background: C.bg, overflow: "hidden", paddingTop: isMobile ? 48 : 88, paddingBottom: isMobile ? 24 : 40 }}>
-      <Blobs mobile={isMobile} />
+    <Section style={{ paddingTop: isMobile ? 120 : 160, paddingBottom: isMobile ? 60 : 80 }}>
+      <MeshGradient variant="hero" />
+      <div style={{
+        position: "absolute", inset: 0, zIndex: 0, opacity: 0.03,
+        backgroundImage: "linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)",
+        backgroundSize: "60px 60px",
+      }} />
       <Container>
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 720 }}>
-          <Pill color={pillColor}>{pill}</Pill>
-          <div style={{ height: 18 }} />
-          <Headline line1={line1} line2={line2} size={isMobile ? "clamp(34px,8vw,46px)" : "clamp(44px,5vw,62px)"} />
-          {sub && <p style={{ marginTop: 20, maxWidth: 580, fontFamily: FF.body, fontSize: isMobile ? 16 : 18, lineHeight: 1.6, color: C.textDim }}>{sub}</p>}
-        </div>
+        <span className={`reveal tag`} style={{ background: tagColor.bg, color: tagColor.text, border: `1px solid ${tagColor.border}`, marginBottom: 24, display: "inline-flex" }}>
+          {tag}
+        </span>
+        <h1 className="reveal reveal-delay-1" style={{ fontSize: isMobile ? "clamp(40px,9vw,56px)" : "clamp(56px,5.5vw,80px)", fontWeight: 900, letterSpacing: "-0.03em", color: T.white, lineHeight: 1.05, maxWidth: 800 }}>
+          {title}<br /><span className="gradient-text">{titleAccent}</span>
+        </h1>
+        {sub && <p className="reveal reveal-delay-2" style={{ marginTop: 22, maxWidth: 560, fontSize: isMobile ? 16 : 19, lineHeight: 1.65, color: T.textDim }}>{sub}</p>}
       </Container>
-    </section>
+    </Section>
   );
 }
 
 /* ============================================================
-   SEITE: ANGEBOTE
+   LEARNING PAGE
    ============================================================ */
-const ANGEBOTE_DETAIL = [
-  { icon: User, color: C.accent, title: "Einzelunterricht", text: "Eine Lehrkraft, ein Kind. Die ganze Stunde dreht sich nur um das, was dein Kind gerade braucht.", points: ["Volle Aufmerksamkeit, kein Mitschwimmen", "Tempo und Themen komplett individuell", "Ideal bei größeren Lücken oder vor Prüfungen"] },
-  { icon: Users, color: C.gold, title: "Gruppenunterricht", text: "Kleine Gruppen auf ähnlichem Niveau. Lernen funktioniert oft besser, wenn man nicht allein davor sitzt.", points: ["Maximal kleine Gruppen, kein Frontalunterricht", "Voneinander lernen, gemeinsam dranbleiben", "Günstiger als Einzelunterricht"] },
-  { icon: GraduationCap, color: C.primary, title: "Abi-Vorbereitung", text: "Gezielte Vorbereitung auf die Abiturprüfungen — fachlich und mental.", points: ["Alte Klausuren und Prüfungsaufgaben", "Lücken schließen, bevor sie zum Problem werden", "Weniger Nervosität durch echte Übung"] },
-  { icon: Laptop, color: C.accent, title: "Online-Teaching", text: "Unterricht per Video, mit derselben Qualität wie vor Ort. Seit 2020 erprobt — kein Notbehelf.", points: ["Von zuhause, ohne Anfahrt", "Dieselben Lehrkräfte wie in Präsenz", "Digitale Tafel und geteilte Aufgaben"] },
-  { icon: PartyPopper, color: C.gold, title: "Abi-Night", text: "Die Nacht vor der Prüfung gemeinsam durcharbeiten. Unser Klassiker — anstrengend, aber er wirkt.", points: ["Intensiv, in der Gruppe, mit Betreuung", "Letzte Fragen klären, Sicherheit gewinnen", "Snacks und Kaffee inklusive"] },
+const ANGEBOTE_LEARNING = [
+  { icon: GraduationCap, color: T.violet, title: "Einzelunterricht", text: "Eine Lehrkraft, ein Kind. Der Stoff richtet sich nach deinem Tempo — nicht nach dem Lehrplan.", bullets: ["Volle Aufmerksamkeit", "Eigenes Tempo", "Ideal bei Lücken"] },
+  { icon: Users, color: T.cyan, title: "Gruppenunterricht", text: "Kleine Gruppen auf gleichem Niveau. Günstiger, entspannter, oft genauso effektiv.", bullets: ["Maximal kleine Gruppen", "Voneinander lernen", "Günstiger als Einzel"] },
+  { icon: Target, color: T.pink, title: "Abi-Vorbereitung", text: "Gezielt auf die Prüfungen. Alte Klausuren, Lücken schließen, Sicherheit gewinnen.", bullets: ["Alte Prüfungen durchgehen", "Gezielte Lückenfüllung", "Weniger Nervosität"] },
+  { icon: PartyPopper, color: T.gold, title: "Abi-Night", text: "Die Nacht vor der Prüfung gemeinsam durch. Unser Klassiker — anstrengend, aber es wirkt.", bullets: ["Intensiv in der Gruppe", "Letzte Fragen klären", "Snacks inklusive"] },
 ];
 
-function AngebotePage({ setPage, isMobile }) {
+const FAECHER = ["Mathematik","Deutsch","Englisch","Französisch","Latein","Spanisch","Physik","Chemie","Biologie","Informatik","Geschichte","Erdkunde","Politik/SoWi","Wirtschaft","Rechnungswesen","BWL/VWL"];
+
+function LearningPage({ setPage, isMobile }) {
+  useReveal();
   return (
     <main>
-      <PageHeader isMobile={isMobile} pill="Unser Angebot" pillColor={C.accent}
-        line1="Nachhilfe, die" line2="zu euch passt."
-        sub="Vom Einzelunterricht bis zur Abi-Night — für die Grundschule genauso wie für die Oberstufe. Hier siehst du, was wir anbieten." />
+      <PageHeader isMobile={isMobile}
+        tag="beck-up Learning" tagColor={{ bg: "rgba(124,58,237,0.12)", text: T.violetLi, border: "rgba(124,58,237,0.3)" }}
+        title="Nachhilfe die" titleAccent="wirklich wirkt."
+        sub="Klasse 1 bis 13, alle Fächer, drei Standorte in Remscheid. Persönlich seit 2003." />
 
-      <section style={{ background: C.bg, ...sectionPad(isMobile, isMobile ? 0 : -20, 0) }}>
+      <Section style={{ padding: isMobile ? "60px 0" : "100px 0" }}>
         <Container>
-          <div style={{ display: "grid", gap: isMobile ? 18 : 22 }}>
-            {ANGEBOTE_DETAIL.map((a, i) => {
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 20 }}>
+            {ANGEBOTE_LEARNING.map((a, i) => {
               const Icon = a.icon;
-              const tint = a.color === C.gold ? C.goldTint : a.color === C.primary ? C.primaryTint : C.accentTint;
               return (
-                <div key={a.title} style={{ position: "relative", display: "grid", gridTemplateColumns: isMobile ? "1fr" : "auto 1fr", gap: isMobile ? 16 : 28, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 22, padding: isMobile ? 24 : 30, boxShadow: SHADOW_SM, overflow: "hidden" }}>
-                  <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 5, background: a.color }} />
-                  <div style={{ width: 60, height: 60, borderRadius: 16, background: tint, display: "flex", alignItems: "center", justifyContent: "center", color: a.color, flexShrink: 0 }}>
-                    <Icon size={30} />
-                  </div>
-                  <div>
-                    <h2 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 22 : 26, color: C.primary }}>{a.title}</h2>
-                    <p style={{ marginTop: 10, fontFamily: FF.body, fontSize: 15.5, lineHeight: 1.6, color: C.textDim, maxWidth: 620 }}>{a.text}</p>
-                    <div style={{ marginTop: 18, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: "10px 20px" }}>
-                      {a.points.map((p) => (
-                        <div key={p} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
-                          <Check size={17} strokeWidth={3} style={{ color: a.color, flexShrink: 0, marginTop: 2 }} />
-                          <span style={{ fontFamily: FF.body, fontSize: 14, lineHeight: 1.5, color: C.text }}>{p}</span>
+                <div key={i} className={`glass card-hover reveal reveal-delay-${i % 3 + 1}`} style={{ borderRadius: 24, overflow: "hidden" }}>
+                  <div style={{ height: 3, background: `linear-gradient(90deg, ${a.color}, transparent)` }} />
+                  <div style={{ padding: isMobile ? 28 : 36 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 14, background: `rgba(${hexToRgb(a.color)},0.15)`, border: `1px solid rgba(${hexToRgb(a.color)},0.3)`, display: "flex", alignItems: "center", justifyContent: "center", color: a.color, marginBottom: 20 }}>
+                      <Icon size={26} />
+                    </div>
+                    <h3 style={{ fontSize: 22, fontWeight: 800, color: T.white }}>{a.title}</h3>
+                    <p style={{ marginTop: 10, fontSize: 15, lineHeight: 1.65, color: T.textDim }}>{a.text}</p>
+                    <div style={{ marginTop: 18, display: "flex", flexDirection: "column", gap: 8 }}>
+                      {a.bullets.map((b, j) => (
+                        <div key={j} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                          <CheckCircle2 size={16} color={a.color} style={{ flexShrink: 0 }} />
+                          <span style={{ fontSize: 14, color: T.textDim }}>{b}</span>
                         </div>
                       ))}
                     </div>
@@ -1071,367 +917,376 @@ function AngebotePage({ setPage, isMobile }) {
               );
             })}
           </div>
-        </Container>
-      </section>
 
-      <section style={{ background: C.bgAlt, ...sectionPad(isMobile) }}>
-        <Container>
-          <div style={{ maxWidth: 560 }}>
-            <Pill color={C.primary}>Fächer</Pill>
-            <div style={{ height: 18 }} />
-            <Headline line1="Diese Fächer" line2="decken wir ab." size={isMobile ? "clamp(28px,6.5vw,38px)" : "clamp(32px,3.6vw,46px)"} />
-            <p style={{ marginTop: 16, fontFamily: FF.body, fontSize: 16, lineHeight: 1.6, color: C.textDim }}>
-              Dein Fach ist nicht dabei? Frag trotzdem — die Liste ist nicht in Stein gemeißelt.
-            </p>
+          {/* Fächer */}
+          <div className="reveal" style={{ marginTop: 80 }}>
+            <h2 style={{ fontSize: isMobile ? 32 : 42, fontWeight: 900, letterSpacing: "-0.02em", color: T.white, marginBottom: 32 }}>
+              Alle <span className="gradient-text">Fächer</span>
+            </h2>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {FAECHER.map(f => (
+                <span key={f} className="tag" style={{ background: "rgba(255,255,255,0.05)", color: T.textDim, border: "1px solid rgba(255,255,255,0.08)", fontSize: 13, letterSpacing: "0.5px", textTransform: "none", padding: "8px 16px" }}>{f}</span>
+              ))}
+            </div>
           </div>
-          <div style={{ marginTop: 32, display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 12 }}>
-            {FAECHER.map((f) => (
-              <div key={f} className="bu-card" style={{ display: "flex", alignItems: "center", gap: 10, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "14px 16px", boxShadow: SHADOW_SM }}>
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: C.accent, flexShrink: 0 }} />
-                <span style={{ fontFamily: FF.body, fontSize: 14.5, fontWeight: 600, color: C.textHi }}>{f}</span>
-              </div>
-            ))}
-          </div>
-        </Container>
-      </section>
 
-      <section style={{ background: C.bg, ...sectionPad(isMobile) }}>
-        <Container>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 24 : 40, alignItems: "center" }}>
-            <div style={{ background: C.primaryTint, border: `1px solid ${C.border}`, borderRadius: 22, padding: isMobile ? 28 : 36 }}>
-              <div style={{ fontFamily: FF.body, fontSize: 11, fontWeight: 800, letterSpacing: "2px", textTransform: "uppercase", color: C.accent }}>Preise</div>
-              <h3 style={{ marginTop: 12, fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 26 : 32, color: C.primary }}>Auf Anfrage.</h3>
-              <p style={{ marginTop: 14, fontFamily: FF.body, fontSize: 15.5, lineHeight: 1.65, color: C.text }}>
-                Was Nachhilfe kostet, hängt davon ab, ob's Einzel- oder Gruppenunterricht wird und wie oft ihr kommt. Wir sagen dir ehrlich, was Sinn macht — und was nicht. Und falls ein Anspruch auf <b>BuT-Förderung</b> besteht, kann der Unterricht für euch sogar kostenlos sein.
+          {/* Preise + CTA */}
+          <div className="reveal" style={{ marginTop: 80, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20 }}>
+            <div className="glass" style={{ borderRadius: 24, padding: isMobile ? 28 : 36 }}>
+              <h3 style={{ fontSize: 24, fontWeight: 800, color: T.white }}>Preise</h3>
+              <p style={{ marginTop: 14, fontSize: 16, lineHeight: 1.7, color: T.textDim }}>
+                Was Nachhilfe kostet, hängt von Einzel- oder Gruppenunterricht und Häufigkeit ab. Wir sagen dir ehrlich, was für dein Kind Sinn macht — und was nicht.<br /><br />
+                Falls ein <strong style={{ color: T.goldLi }}>BuT-Anspruch</strong> besteht, kann der Unterricht komplett kostenlos sein.
               </p>
             </div>
-            <div style={{ textAlign: isMobile ? "left" : "center" }}>
-              <Headline line1="Lass uns" line2="darüber reden." size={isMobile ? "clamp(28px,6.5vw,38px)" : "clamp(32px,3.4vw,46px)"} style={{ textAlign: isMobile ? "left" : "center" }} />
-              <p style={{ marginTop: 16, fontFamily: FF.body, fontSize: 16, lineHeight: 1.6, color: C.textDim, maxWidth: 400, marginInline: isMobile ? 0 : "auto" }}>
-                Die erste Stunde ist gratis. Danach entscheidet ihr in Ruhe.
-              </p>
-              <div style={{ marginTop: 24, display: "flex", gap: 12, flexWrap: "wrap", justifyContent: isMobile ? "flex-start" : "center" }}>
-                <Button variant="gold" size="lg" onClick={() => setPage("kontakt")}>Probestunde anfragen <ArrowRight size={18} /></Button>
-                <Button as="a" href={TEL_HREF} variant="ghost" size="lg"><Phone size={18} />{TEL}</Button>
-              </div>
+            <div style={{ background: "linear-gradient(135deg, rgba(124,58,237,0.2), rgba(6,182,212,0.1))", border: "1px solid rgba(124,58,237,0.3)", borderRadius: 24, padding: isMobile ? 28 : 36, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: isMobile ? "flex-start" : "center", textAlign: isMobile ? "left" : "center" }}>
+              <h3 style={{ fontSize: 26, fontWeight: 900, color: T.white }}>Erste Stunde gratis.</h3>
+              <p style={{ marginTop: 12, fontSize: 15, color: T.textDim, maxWidth: 320 }}>Lern die Lehrkraft kennen — ohne Risiko, ohne Vertrag.</p>
+              <button className="btn-primary" onClick={() => setPage("kontakt")} style={{ marginTop: 24 }}>
+                Probestunde buchen <ArrowRight size={16} />
+              </button>
             </div>
           </div>
         </Container>
-      </section>
+      </Section>
       <Footer setPage={setPage} isMobile={isMobile} />
     </main>
   );
 }
 
 /* ============================================================
-   SEITE: BuT / FÖRDERUNG
+   ELEARNING PAGE
    ============================================================ */
-const BUT_ANSPRUCH = [
-  "Bürgergeld (SGB II)",
-  "Sozialhilfe (SGB XII)",
-  "Wohngeld",
-  "Kinderzuschlag",
-  "Leistungen nach dem Asylbewerberleistungsgesetz",
-];
-const BUT_SCHRITTE = [
-  { n: "1", title: "Anspruch klären", text: "Bezieht ihr eine der genannten Leistungen? Dann stehen die Chancen gut. Im Zweifel klären wir das gemeinsam." },
-  { n: "2", title: "Antrag stellen", text: "Der Antrag läuft über die Stadt Remscheid bzw. das Jobcenter. Wir geben dir die nötigen Bestätigungen für die Lernförderung." },
-  { n: "3", title: "Loslegen", text: "Ist der Antrag bewilligt, übernimmt das Amt die Kosten — und dein Kind kann ohne finanzielle Sorgen lernen." },
-];
-
-function ButPage({ setPage, isMobile }) {
+function ELearningPage({ setPage, isMobile }) {
+  useReveal();
   return (
     <main>
-      <PageHeader isMobile={isMobile} pill="Bildung & Teilhabe" pillColor={C.gold}
-        line1="Nachhilfe, die" line2="der Staat zahlt."
-        sub="Über das Bildungs- und Teilhabepaket (BuT) kann Lernförderung kostenlos sein. Viele Familien haben Anspruch, ohne es zu wissen. Hier erklären wir, wie es geht." />
+      <PageHeader isMobile={isMobile}
+        tag="beck-up eLearning" tagColor={{ bg: "rgba(6,182,212,0.12)", text: T.cyanLi, border: "rgba(6,182,212,0.3)" }}
+        title="Online lernen." titleAccent="Kein Kompromiss."
+        sub="Seit 2020 erprobt. Dieselben Lehrkräfte, dieselbe Qualität — von zuhause." />
 
-      <section style={{ background: C.bg, ...sectionPad(isMobile, isMobile ? 0 : -20, 0) }}>
+      <Section style={{ padding: isMobile ? "60px 0" : "100px 0" }}>
         <Container>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 28 : 48 }}>
-            <div>
-              <h2 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 24 : 30, color: C.primary }}>Was ist das BuT?</h2>
-              <p style={{ marginTop: 14, fontFamily: FF.body, fontSize: 16, lineHeight: 1.7, color: C.textDim }}>
-                Das Bildungs- und Teilhabepaket ist eine staatliche Leistung, die Kindern und Jugendlichen aus Familien mit wenig Einkommen die Teilhabe an Bildung ermöglicht. Dazu gehört auch <b style={{ color: C.text }}>Lernförderung</b> — also Nachhilfe.
-              </p>
-              <p style={{ marginTop: 14, fontFamily: FF.body, fontSize: 16, lineHeight: 1.7, color: C.textDim }}>
-                Das Ziel ist einfach: Bildung soll nicht am Geldbeutel der Eltern scheitern. Wenn die Voraussetzungen passen, übernimmt das Amt die Kosten für die Nachhilfe bei uns.
-              </p>
-            </div>
-            <div style={{ background: C.goldTint, border: `1px solid ${C.gold}`, borderRadius: 22, padding: isMobile ? 26 : 32 }}>
-              <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 21 : 24, color: C.goldDk }}>Wer hat Anspruch?</h3>
-              <p style={{ marginTop: 12, fontFamily: FF.body, fontSize: 14.5, lineHeight: 1.6, color: C.text }}>
-                In der Regel Familien, die eine dieser Leistungen beziehen:
-              </p>
-              <div style={{ marginTop: 18 }}>
-                {BUT_ANSPRUCH.map((a) => (
-                  <div key={a} style={{ display: "flex", gap: 11, alignItems: "flex-start", marginBottom: 12 }}>
-                    <CheckCircle2 size={19} style={{ color: C.goldDk, flexShrink: 0, marginTop: 1 }} />
-                    <span style={{ fontFamily: FF.body, fontSize: 15, fontWeight: 600, color: C.textHi }}>{a}</span>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20, marginBottom: 60 }}>
+            {[
+              { icon: Laptop, color: T.cyan, title: "Video-Unterricht", text: "Live mit deiner Lehrkraft — klar, interaktiv, ohne Rauschen." },
+              { icon: Globe, color: T.violet, title: "Digitale Tafel", text: "Aufgaben, Erklärungen und Notizen — gemeinsam sichtbar auf einem Screen." },
+              { icon: Clock, color: T.pink, title: "Flexible Zeiten", text: "Morgens, abends, am Wochenende. Du bestimmst wann." },
+            ].map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <div key={i} className={`glass card-hover reveal reveal-delay-${i + 1}`} style={{ borderRadius: 20, padding: 28 }}>
+                  <div style={{ width: 50, height: 50, borderRadius: 14, background: `rgba(${hexToRgb(f.color)},0.15)`, display: "flex", alignItems: "center", justifyContent: "center", color: f.color, marginBottom: 18 }}>
+                    <Icon size={24} />
                   </div>
-                ))}
-              </div>
-              <p style={{ marginTop: 8, fontFamily: FF.body, fontSize: 13, lineHeight: 1.55, color: C.goldDk }}>
-                Unsicher? Ruf uns an — wir schauen gemeinsam, ob's passt.
-              </p>
-            </div>
+                  <h3 style={{ fontSize: 20, fontWeight: 800, color: T.white }}>{f.title}</h3>
+                  <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.65, color: T.textDim }}>{f.text}</p>
+                </div>
+              );
+            })}
           </div>
-        </Container>
-      </section>
 
-      <section style={{ background: C.bgAlt, ...sectionPad(isMobile) }}>
-        <Container>
-          <div style={{ maxWidth: 560 }}>
-            <Pill color={C.gold}>In drei Schritten</Pill>
-            <div style={{ height: 18 }} />
-            <Headline line1="So kommt ihr" line2="an die Förderung." size={isMobile ? "clamp(28px,6.5vw,38px)" : "clamp(32px,3.6vw,46px)"} />
-          </div>
-          <div style={{ marginTop: 36, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: isMobile ? 16 : 22 }}>
-            {BUT_SCHRITTE.map((s) => (
-              <div key={s.n} style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 20, padding: isMobile ? 24 : 28, boxShadow: SHADOW_SM }}>
-                <div style={{ width: 48, height: 48, borderRadius: "50%", background: C.gold, color: C.primaryDk, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FF.display, fontWeight: 800, fontSize: 21 }}>{s.n}</div>
-                <h3 style={{ marginTop: 16, fontFamily: FF.display, fontWeight: 700, fontSize: 19, color: C.primary }}>{s.title}</h3>
-                <p style={{ marginTop: 10, fontFamily: FF.body, fontSize: 14.5, lineHeight: 1.6, color: C.textDim }}>{s.text}</p>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop: 32, display: "flex", gap: 14, flexWrap: "wrap" }}>
-            <Button as="a" href="https://www.remscheid.de" target="_blank" variant="primary" size="lg">
-              Antrag bei der Stadt Remscheid <ArrowRight size={18} />
-            </Button>
-            <Button as="a" href="/downloads/but-info.pdf" target="_blank" variant="ghost" size="lg">
-              Infoblatt herunterladen
-            </Button>
-          </div>
-          <p style={{ marginTop: 14, fontFamily: FF.body, fontSize: 13, color: C.textVeryDim }}>
-            Hinweis: Die genauen Voraussetzungen und Formulare legt die Stadt Remscheid fest. Wir unterstützen euch beim Teil zur Lernförderung.
-          </p>
-        </Container>
-      </section>
-
-      <section style={{ background: C.bg, ...sectionPad(isMobile) }}>
-        <Container style={{ maxWidth: 760 }}>
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <Headline line1="Fragen zur" line2="Förderung?" size={isMobile ? "clamp(28px,6.5vw,38px)" : "clamp(32px,3.4vw,46px)"} style={{ textAlign: "center" }} />
-            <p style={{ marginTop: 14, fontFamily: FF.body, fontSize: 16, lineHeight: 1.6, color: C.textDim, maxWidth: 480, marginInline: "auto" }}>
-              Schreib uns — wir melden uns und klären mit dir, ob und wie's mit dem BuT klappt.
-            </p>
-          </div>
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 24, padding: isMobile ? 24 : 36, boxShadow: SHADOW_MD }}>
-            <ContactForm compact />
-          </div>
-        </Container>
-      </section>
-      <Footer setPage={setPage} isMobile={isMobile} />
-    </main>
-  );
-}
-
-/* ============================================================
-   SEITE: JOBS
-   ============================================================ */
-const JOB_WIR = [
-  { title: "Flexible Zeiten", text: "Du sagst, wann du kannst. Nachmittags, abends, am Wochenende — wir richten uns nach deinem Stundenplan." },
-  { title: "Faire Bezahlung", text: "Pünktlich und transparent. Kein Kleingedrucktes." },
-  { title: "Präsenz oder online", text: "Unterrichte vor Ort in Remscheid oder bequem per Video von zuhause." },
-  { title: "Wir lassen dich nicht allein", text: "Materialien, Ansprechpartner und Tipps gibt's dazu. Gerade am Anfang." },
-];
-
-function JobsPage({ setPage, isMobile }) {
-  return (
-    <main>
-      <PageHeader isMobile={isMobile} pill="Jobs bei beck-up" pillColor={C.accent}
-        line1="Gib dein Wissen" line2="weiter."
-        sub="Du studierst, machst gerade dein Abi oder kennst dich einfach in einem Fach richtig gut aus? Dann werde Nachhilfelehrkraft bei uns." />
-
-      <section style={{ background: C.bg, ...sectionPad(isMobile, isMobile ? 0 : -20, 0) }}>
-        <Container>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: isMobile ? 28 : 48 }}>
+          <div className="reveal" style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20, alignItems: "center" }}>
             <div>
-              <h2 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 24 : 30, color: C.primary }}>Wen wir suchen</h2>
-              <p style={{ marginTop: 14, fontFamily: FF.body, fontSize: 16, lineHeight: 1.7, color: C.textDim }}>
-                Du musst kein ausgebildeter Lehrer sein. Wichtiger ist, dass du dein Fach verstehst und es anderen erklären kannst, ohne dass sie sich dumm fühlen. Geduld zählt mehr als Perfektion.
+              <h2 style={{ fontSize: isMobile ? 32 : 44, fontWeight: 900, letterSpacing: "-0.02em", color: T.white, lineHeight: 1.1 }}>
+                Online ist kein<br /><span className="gradient-text">Notbehelf.</span>
+              </h2>
+              <p style={{ marginTop: 18, fontSize: 16, lineHeight: 1.75, color: T.textDim }}>
+                Wir haben 2020 nicht improvisiert — wir haben investiert. Seitdem ist Online-Teaching bei uns genauso gut wie Präsenz. Viele Schüler bevorzugen es sogar, weil die Anfahrt wegfällt und die Konzentration besser ist.
               </p>
-              <div style={{ marginTop: 22 }}>
-                <Marker color={C.accent}>Sicher in mindestens einem Schulfach</Marker>
-                <Marker color={C.accent}>Geduldig und zuverlässig</Marker>
-                <Marker color={C.accent}>Lust, mit Kindern und Jugendlichen zu arbeiten</Marker>
-              </div>
+              <button className="btn-primary" onClick={() => setPage("kontakt")} style={{ marginTop: 28 }}>
+                Online-Probestunde buchen <ArrowRight size={16} />
+              </button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              {JOB_WIR.map((w) => (
-                <div key={w.title} style={{ background: C.bgAlt, border: `1px solid ${C.border}`, borderRadius: 18, padding: isMobile ? 20 : 22 }}>
-                  <Sparkles size={20} style={{ color: C.gold }} />
-                  <h3 style={{ marginTop: 12, fontFamily: FF.display, fontWeight: 700, fontSize: 16.5, color: C.primary, lineHeight: 1.25 }}>{w.title}</h3>
-                  <p style={{ marginTop: 8, fontFamily: FF.body, fontSize: 13.5, lineHeight: 1.55, color: C.textDim }}>{w.text}</p>
+            <div className="glass reveal reveal-delay-2" style={{ borderRadius: 24, padding: isMobile ? 28 : 36 }}>
+              {["Alle Fächer auch online", "Kein Extra-Equipment nötig", "Aufzeichnung möglich", "Dieselben Lehrkräfte wie vor Ort", "Für alle Klassen"].map((f, i) => (
+                <div key={i} style={{ display: "flex", gap: 12, alignItems: "center", padding: "14px 0", borderBottom: i < 4 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                  <CheckCircle2 size={18} color={T.cyan} style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: 15, color: T.text }}>{f}</span>
                 </div>
               ))}
             </div>
           </div>
         </Container>
-      </section>
-
-      <section style={{ background: C.bgAlt, ...sectionPad(isMobile) }}>
-        <Container style={{ maxWidth: 760 }}>
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <Pill color={C.accent}>Bewerbung</Pill>
-            <div style={{ height: 16 }} />
-            <Headline line1="Klingt gut?" line2="Dann bewirb dich." size={isMobile ? "clamp(28px,6.5vw,38px)" : "clamp(32px,3.4vw,46px)"} style={{ textAlign: "center" }} />
-          </div>
-          <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 24, padding: isMobile ? 24 : 36, boxShadow: SHADOW_MD }}>
-            <JobForm />
-          </div>
-        </Container>
-      </section>
+      </Section>
       <Footer setPage={setPage} isMobile={isMobile} />
     </main>
   );
 }
 
 /* ============================================================
-   SEITE: FAQ
+   SPORT PAGE
    ============================================================ */
-const FAQS = [
-  { q: "Ab welcher Klasse bietet ihr Nachhilfe an?", a: "Von der ersten Klasse bis zum Abitur — also Klasse 1 bis 13. Ob Grundschule, Mittelstufe oder Oberstufe, wir haben für jede Stufe die passenden Lehrkräfte." },
-  { q: "Ist die Probestunde wirklich kostenlos?", a: "Ja, komplett. Dein Kind lernt die Lehrkraft kennen, ihr schaut, ob die Chemie stimmt — und das kostet nichts. Erst wenn ihr danach weitermachen wollt, reden wir über alles Weitere." },
-  { q: "Was kostet die Nachhilfe?", a: "Das hängt davon ab: Einzel- oder Gruppenunterricht, wie oft pro Woche, welche Stufe. Deshalb nennen wir den Preis im Gespräch, wenn wir wissen, was ihr braucht. Und falls ihr Anspruch auf BuT-Förderung habt, kann es für euch sogar kostenlos sein." },
-  { q: "Was ist das BuT und zahlt der Staat die Nachhilfe?", a: "Das Bildungs- und Teilhabepaket übernimmt unter bestimmten Voraussetzungen die Kosten für Lernförderung. Viele Familien haben Anspruch, ohne es zu wissen. Auf unserer Förderseite steht, wie das geht — und wir helfen beim Antrag." },
-  { q: "Einzel- oder Gruppenunterricht — was ist besser?", a: "Kommt drauf an. Einzelunterricht ist intensiver und gut bei größeren Lücken. In der Gruppe lernt man günstiger und oft entspannter, weil man nicht allein im Fokus steht. Wir sagen dir ehrlich, was für dein Kind mehr Sinn macht." },
-  { q: "Bietet ihr auch Online-Unterricht an?", a: "Ja. Seit 2020 läuft das bei uns rund — mit denselben Lehrkräften wie vor Ort, digitaler Tafel und geteilten Aufgaben. Für viele ist es praktischer, weil die Anfahrt wegfällt." },
-  { q: "Was ist die Abi-Night?", a: "Unser Klassiker: In der Zeit vor den Prüfungen arbeiten wir intensiv und in der Gruppe den Stoff durch. Anstrengend, klar. Aber es gibt Sicherheit, und Snacks sind auch dabei." },
-  { q: "Welche Fächer deckt ihr ab?", a: "Die gängigen Schulfächer — von Mathe, Deutsch und Englisch über die Naturwissenschaften bis zu Latein und den Gesellschaftsfächern. Wenn dein Fach nicht in der Liste steht, frag trotzdem einfach nach." },
-  { q: "Wie schnell bekommen wir einen Termin?", a: "Meistens ziemlich kurzfristig. Ruf an oder schreib uns, dann finden wir oft schon in derselben Woche etwas. Gerade vor Prüfungen lohnt es sich, früh dran zu sein." },
-  { q: "Wo sind eure Standorte?", a: "Wir sind dreimal in Remscheid: Alleestr. 116, Alleestr. 29 und in Remscheid-Lennep in der Bahnhofstr. 3. Welcher Standort für euch am besten passt, klären wir im Gespräch." },
-  { q: "Was passiert, wenn eine Stunde ausfällt?", a: "Sagt rechtzeitig Bescheid, dann finden wir einen Nachholtermin. Krank werden alle mal — das ist kein Problem, solange ihr euch meldet." },
-  { q: "Mein Kind hat keine Lust auf Nachhilfe. Bringt das was?", a: "Ehrliche Antwort: Motivation ist Teil unserer Arbeit. Viele kommen anfangs widerwillig und merken dann, dass es gar nicht so schlimm ist, wenn man Sachen endlich versteht. Die Probestunde ist genau dafür da — unverbindlich ausprobieren." },
-];
-
-function FaqItem({ q, a }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ borderBottom: `1px solid ${C.border}` }}>
-      <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
-        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, width: "100%", padding: "20px 4px", textAlign: "left", minHeight: 44 }}>
-        <span style={{ fontFamily: FF.display, fontWeight: 700, fontSize: 17, color: open ? C.accent : C.primary, lineHeight: 1.35, transition: "color .2s ease" }}>{q}</span>
-        <span style={{ flexShrink: 0, width: 32, height: 32, borderRadius: "50%", background: open ? C.accent : C.bgAlt, color: open ? "#fff" : C.primary, display: "flex", alignItems: "center", justifyContent: "center", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform .3s ease, background .2s ease, color .2s ease" }}>
-          <ChevronDown size={18} />
-        </span>
-      </button>
-      <div style={{ overflow: "hidden", maxHeight: open ? 320 : 0, transition: "max-height .35s ease" }}>
-        <p style={{ padding: "0 4px 22px", fontFamily: FF.body, fontSize: 15, lineHeight: 1.7, color: C.textDim, maxWidth: 760 }}>{a}</p>
-      </div>
-    </div>
-  );
-}
-
-function FaqPage({ setPage, isMobile }) {
+function SportPage({ setPage, isMobile }) {
+  useReveal();
   return (
     <main>
-      <PageHeader isMobile={isMobile} pill="Häufige Fragen" pillColor={C.primary}
-        line1="Alles, was ihr" line2="wissen wollt."
-        sub="Und falls deine Frage hier nicht steht: Ruf an oder schreib uns. Wir antworten gern persönlich." />
+      <PageHeader isMobile={isMobile}
+        tag="Sport & Freizeit" tagColor={{ bg: "rgba(245,158,11,0.12)", text: T.goldLi, border: "rgba(245,158,11,0.3)" }}
+        title="Bewegen." titleAccent="Gewinnen. Wachsen."
+        sub="Tennis und Training in Remscheid. Für Einsteiger und Fortgeschrittene." />
 
-      <section style={{ background: C.bg, ...sectionPad(isMobile, isMobile ? 0 : -20, 0) }}>
-        <Container style={{ maxWidth: 820 }}>
-          <div>
-            {FAQS.map((f) => <FaqItem key={f.q} q={f.q} a={f.a} />)}
-          </div>
-          <div style={{ marginTop: 40, background: C.bgAlt, border: `1px solid ${C.border}`, borderRadius: 22, padding: isMobile ? 26 : 34, textAlign: "center" }}>
-            <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 22 : 26, color: C.primary }}>Frage nicht dabei?</h3>
-            <p style={{ marginTop: 10, fontFamily: FF.body, fontSize: 15.5, lineHeight: 1.6, color: C.textDim, maxWidth: 420, marginInline: "auto" }}>
-              Kein Problem. Stell sie uns direkt — am schnellsten per WhatsApp oder Anruf.
-            </p>
-            <div style={{ marginTop: 22, display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-              <Button variant="gold" onClick={() => setPage("kontakt")}>Zum Kontakt <ArrowRight size={18} /></Button>
-              <Button as="a" href={WA_HREF} target="_blank" variant="ghost"><MessageCircle size={18} />WhatsApp</Button>
-            </div>
-          </div>
-        </Container>
-      </section>
-      <Footer setPage={setPage} isMobile={isMobile} />
-    </main>
-  );
-}
-
-/* ============================================================
-   SEITE: KONTAKT
-   ============================================================ */
-const OEFFNUNG = [
-  { d: "Montag – Freitag", h: "09:00 – 19:00 Uhr" },
-  { d: "Samstag", h: "10:00 – 14:00 Uhr" },
-  { d: "Sonntag", h: "geschlossen" },
-];
-
-function ContactRow({ icon: Icon, label, value, href, target }) {
-  const inner = (
-    <div className="bu-row" style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 12px", borderRadius: 14 }}>
-      <div style={{ width: 44, height: 44, borderRadius: 12, background: C.accentTint, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <Icon size={21} />
-      </div>
-      <div>
-        <div style={{ fontFamily: FF.body, fontSize: 12, fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase", color: C.textVeryDim }}>{label}</div>
-        <div style={{ fontFamily: FF.body, fontSize: 16, fontWeight: 700, color: C.textHi }}>{value}</div>
-      </div>
-    </div>
-  );
-  if (href) return <a href={href} target={target} rel={target === "_blank" ? "noopener noreferrer" : undefined} style={{ display: "block" }}>{inner}</a>;
-  return inner;
-}
-
-function KontaktPage({ setPage, isMobile }) {
-  return (
-    <main>
-      <PageHeader isMobile={isMobile} pill="Kontakt" pillColor={C.accent}
-        line1="Lass uns" line2="reden."
-        sub="Schreib uns, ruf an oder komm vorbei. Die erste Stunde ist kostenlos — und ein Gespräch sowieso." />
-
-      <section style={{ background: C.bg, ...sectionPad(isMobile, isMobile ? 0 : -20, 0) }}>
+      <Section style={{ padding: isMobile ? "60px 0" : "100px 0" }}>
         <Container>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "0.85fr 1.15fr", gap: isMobile ? 36 : 56, alignItems: "start" }}>
-            <div>
-              <h2 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 22 : 26, color: C.primary }}>So erreichst du uns</h2>
-              <div style={{ marginTop: 18 }}>
-                <ContactRow icon={Phone} label="Telefon" value={TEL} href={TEL_HREF} />
-                <ContactRow icon={MessageCircle} label="WhatsApp" value={MOBIL} href={WA_HREF} target="_blank" />
-                <ContactRow icon={Mail} label="E-Mail" value={MAIL} href={MAIL_HREF} />
-              </div>
-
-              <h3 style={{ marginTop: 30, fontFamily: FF.display, fontWeight: 800, fontSize: 19, color: C.primary }}>Standorte in Remscheid</h3>
-              <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
-                {STANDORTE.map((s, i) => (
-                  <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "14px 16px", background: C.bgAlt, borderRadius: 14, border: `1px solid ${C.border}` }}>
-                    <MapPin size={19} style={{ color: C.accent, flexShrink: 0, marginTop: 2 }} />
-                    <div>
-                      <div style={{ fontFamily: FF.body, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: C.textVeryDim }}>{s.tag}</div>
-                      <div style={{ fontFamily: FF.body, fontSize: 15, fontWeight: 600, color: C.textHi }}>{s.street}, {s.city}</div>
-                    </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 48, alignItems: "center", marginBottom: 80 }}>
+            <div className="reveal">
+              <h2 style={{ fontSize: isMobile ? 32 : 44, fontWeight: 900, letterSpacing: "-0.02em", color: T.white, lineHeight: 1.1 }}>
+                Tennis mit<br /><span className="gradient-text-gold">Verbandslizenz.</span>
+              </h2>
+              <p style={{ marginTop: 18, fontSize: 16, lineHeight: 1.75, color: T.textDim }}>
+                Unsere Coaches haben Verbandslizenzen und bringen dich technisch wirklich weiter — nicht nur Rally schlagen. Wir trainieren am Hastener Turnverein und beim INJOY Remscheid.
+              </p>
+              <div style={{ marginTop: 28, display: "flex", flexDirection: "column", gap: 14 }}>
+                {["Tennistraining für alle Altersgruppen", "Lizenzierte Trainer", "Einzel- und Gruppentraining", "Hastener TV + INJOY Remscheid"].map((f, i) => (
+                  <div key={i} style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <Trophy size={17} color={T.gold} style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: 15, color: T.textDim }}>{f}</span>
                   </div>
                 ))}
               </div>
+              <button className="btn-primary" onClick={() => setPage("kontakt")} style={{ marginTop: 32, background: `linear-gradient(135deg, ${T.gold}, ${T.pink})` }}>
+                Kontakt aufnehmen <ArrowRight size={16} />
+              </button>
+            </div>
+            <div className="reveal reveal-delay-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              {[
+                { icon: Dumbbell, title: "Technik", text: "Von Grundschlag bis Turnierniveau" },
+                { icon: Users, title: "Gruppe", text: "Miteinander trainieren, voneinander lernen" },
+                { icon: Trophy, title: "Wettkampf", text: "Vorbereitung auf Turniere und Matches" },
+                { icon: Heart, title: "Fitness", text: "Sport der Spaß macht und fit hält" },
+              ].map((c, i) => {
+                const Icon = c.icon;
+                return (
+                  <div key={i} className="glass" style={{ borderRadius: 18, padding: 22, textAlign: "center" }}>
+                    <Icon size={28} color={T.gold} style={{ marginBottom: 12 }} />
+                    <div style={{ fontWeight: 700, fontSize: 15, color: T.white }}>{c.title}</div>
+                    <div style={{ fontSize: 13, color: T.textDim, marginTop: 6, lineHeight: 1.5 }}>{c.text}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Container>
+      </Section>
+      <Footer setPage={setPage} isMobile={isMobile} />
+    </main>
+  );
+}
 
-              <h3 style={{ marginTop: 30, fontFamily: FF.display, fontWeight: 800, fontSize: 19, color: C.primary }}>Öffnungszeiten</h3>
-              <div style={{ marginTop: 14, background: C.bgAlt, borderRadius: 14, border: `1px solid ${C.border}`, overflow: "hidden" }}>
-                {OEFFNUNG.map((o, i) => (
-                  <div key={o.d} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "13px 16px", borderTop: i ? `1px solid ${C.border}` : "none" }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontFamily: FF.body, fontSize: 14.5, fontWeight: 600, color: C.text }}>
-                      <Clock size={15} style={{ color: C.textVeryDim }} />{o.d}
-                    </span>
-                    <span style={{ fontFamily: FF.body, fontSize: 14.5, fontWeight: 700, color: o.h === "geschlossen" ? C.textVeryDim : C.textHi }}>{o.h}</span>
+/* ============================================================
+   PREISE PAGE
+   ============================================================ */
+function PreisePage({ setPage, isMobile }) {
+  useReveal();
+  return (
+    <main>
+      <PageHeader isMobile={isMobile}
+        tag="Preise" tagColor={{ bg: "rgba(16,185,129,0.12)", text: "#6ee7b7", border: "rgba(16,185,129,0.3)" }}
+        title="Transparent." titleAccent="Auf Anfrage."
+        sub="Was Nachhilfe kostet, hängt von deiner Situation ab. Wir sagen dir's ehrlich." />
+
+      <Section style={{ padding: isMobile ? "60px 0" : "100px 0" }}>
+        <Container style={{ maxWidth: 800 }}>
+          <div className="reveal glass" style={{ borderRadius: 28, padding: isMobile ? 32 : 48, marginBottom: 32 }}>
+            <h2 style={{ fontSize: 28, fontWeight: 800, color: T.white }}>Warum kein Festpreis auf der Website?</h2>
+            <p style={{ marginTop: 16, fontSize: 16, lineHeight: 1.8, color: T.textDim }}>
+              Weil Einzel- und Gruppenunterricht unterschiedlich kosten. Weil Klasse 1 und Klasse 13 verschiedene Anforderungen haben. Und weil wir dir keinen Preis nennen wollen, der dann doch nicht stimmt.
+            </p>
+            <p style={{ marginTop: 14, fontSize: 16, lineHeight: 1.8, color: T.textDim }}>
+              Ruf an oder schreib uns — wir sagen dir in 2 Minuten was auf dich zukommt. Ohne Kleingedrucktes.
+            </p>
+          </div>
+
+          <div className="reveal reveal-delay-1" style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.15), rgba(236,72,153,0.1))", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 28, padding: isMobile ? 32 : 48, marginBottom: 32 }}>
+            <h2 style={{ fontSize: 26, fontWeight: 800, color: T.goldLi }}>BuT — Bildungs- und Teilhabepaket</h2>
+            <p style={{ marginTop: 14, fontSize: 16, lineHeight: 1.8, color: T.textDim }}>
+              Falls du Bürgergeld, Wohngeld, Kinderzuschlag oder ähnliche Leistungen beziehst, kann der Staat die Nachhilfe komplett übernehmen. Viele Familien wissen das nicht. Wir helfen beim Antrag.
+            </p>
+            <button className="btn-ghost" onClick={() => setPage("kontakt")} style={{ marginTop: 24 }}>
+              BuT-Beratung anfragen <ArrowRight size={16} />
+            </button>
+          </div>
+
+          <div className="reveal reveal-delay-2" style={{ textAlign: "center", padding: "40px 0" }}>
+            <h3 style={{ fontSize: 24, fontWeight: 800, color: T.white }}>Erste Stunde: kostenlos.</h3>
+            <p style={{ marginTop: 12, fontSize: 16, color: T.textDim }}>Immer. Für alle Angebote.</p>
+            <button className="btn-primary" onClick={() => setPage("kontakt")} style={{ marginTop: 24 }}>
+              Jetzt anfragen <ArrowRight size={16} />
+            </button>
+          </div>
+        </Container>
+      </Section>
+      <Footer setPage={setPage} isMobile={isMobile} />
+    </main>
+  );
+}
+
+/* ============================================================
+   CONTACT FORM
+   ============================================================ */
+const inputSt = {
+  width: "100%", padding: "13px 16px", borderRadius: 12,
+  background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+  color: T.white, fontSize: 15, outline: "none",
+  transition: "border-color 0.2s, background 0.2s",
+};
+
+function ContactForm() {
+  const empty = { parent: "", student: "", klasse: "", fach: "", phone: "", email: "", message: "", source: "" };
+  const [form, setForm] = useState(empty);
+  const [status, setStatus] = useState("idle");
+  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  const submit = async () => {
+    if (status === "sending") return;
+    if (!form.parent || !form.email || !form.message) { setStatus("validation"); return; }
+    setStatus("sending");
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ access_key: "DEIN_WEB3FORMS_KEY", from_name: "beck-up Website", subject: "Neue Anfrage", ...form }),
+      });
+      const data = await res.json();
+      if (data.success) { setStatus("success"); setForm(empty); } else setStatus("error");
+    } catch { setStatus("error"); }
+  };
+
+  if (status === "success") return (
+    <div style={{ textAlign: "center", padding: "48px 24px" }}>
+      <CheckCircle2 size={48} color={T.green} style={{ margin: "0 auto 20px" }} />
+      <h3 style={{ fontSize: 24, fontWeight: 800, color: T.white }}>Danke — wir melden uns!</h3>
+      <p style={{ marginTop: 10, color: T.textDim }}>Meistens noch am selben Tag.</p>
+      <button className="btn-ghost" onClick={() => setStatus("idle")} style={{ marginTop: 24 }}>Noch eine Anfrage</button>
+    </div>
+  );
+
+  const FAECHER_OPT = ["Mathematik","Deutsch","Englisch","Französisch","Latein","Physik","Chemie","Biologie","Informatik","Geschichte","Sonstiges"];
+
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        {[["parent","Name (Erziehungsberechtigte/r) *","Vor- und Nachname","text"],["student","Name des Kindes","optional","text"],
+          ["phone","Telefon","Für den Rückruf","tel"],["email","E-Mail *","name@beispiel.de","email"]].map(([k,l,p,t]) => (
+          <div key={k}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: T.textDim, letterSpacing: "0.5px", display: "block", marginBottom: 7 }}>{l}</label>
+            <input type={t} style={inputSt} value={form[k]} onChange={set(k)} placeholder={p}
+              onFocus={e => e.target.style.borderColor = T.violet}
+              onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"} />
+          </div>
+        ))}
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 700, color: T.textDim, letterSpacing: "0.5px", display: "block", marginBottom: 7 }}>Klasse</label>
+          <select style={{ ...inputSt, cursor: "pointer" }} value={form.klasse} onChange={set("klasse")}>
+            <option value="">Bitte wählen</option>
+            {Array.from({ length: 13 }, (_, i) => <option key={i + 1} value={`${i + 1}`}>{i + 1}. Klasse</option>)}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 700, color: T.textDim, letterSpacing: "0.5px", display: "block", marginBottom: 7 }}>Fach</label>
+          <select style={{ ...inputSt, cursor: "pointer" }} value={form.fach} onChange={set("fach")}>
+            <option value="">Bitte wählen</option>
+            {FAECHER_OPT.map(f => <option key={f} value={f}>{f}</option>)}
+          </select>
+        </div>
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <label style={{ fontSize: 12, fontWeight: 700, color: T.textDim, letterSpacing: "0.5px", display: "block", marginBottom: 7 }}>Dein Anliegen *</label>
+        <textarea style={{ ...inputSt, minHeight: 120, resize: "vertical" }} value={form.message} onChange={set("message")} placeholder="Was kann beck-up für euch tun?"
+          onFocus={e => e.target.style.borderColor = T.violet}
+          onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"} />
+      </div>
+      {status === "validation" && (
+        <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12, padding: "12px 16px", borderRadius: 10, background: "rgba(236,72,153,0.1)", border: "1px solid rgba(236,72,153,0.3)" }}>
+          <AlertCircle size={18} color={T.pink} /> <span style={{ fontSize: 14, color: T.pinkLi }}>Bitte Name, E-Mail und Anliegen ausfüllen.</span>
+        </div>
+      )}
+      <button className="btn-primary" onClick={submit} style={{ marginTop: 18, opacity: status === "sending" ? 0.7 : 1, minWidth: 200, justifyContent: "center" }}>
+        {status === "sending" ? "Wird gesendet…" : <><Send size={16} /> Anfrage senden</>}
+      </button>
+      <p style={{ marginTop: 12, fontSize: 12, color: T.textDimmer }}>Unverbindlich. Wir melden uns persönlich.</p>
+    </div>
+  );
+}
+
+/* ============================================================
+   KONTAKT PAGE
+   ============================================================ */
+function KontaktPage({ setPage, isMobile }) {
+  useReveal();
+  const STANDORTE = [
+    { tag: "Hauptstandort", street: "Alleestr. 116", city: "42853 Remscheid" },
+    { tag: "Zweiter Standort", street: "Alleestr. 29", city: "Remscheid" },
+    { tag: "Remscheid-Lennep", street: "Bahnhofstr. 3", city: "42897 Remscheid" },
+  ];
+  return (
+    <main>
+      <PageHeader isMobile={isMobile}
+        tag="Kontakt" tagColor={{ bg: "rgba(124,58,237,0.12)", text: T.violetLi, border: "rgba(124,58,237,0.3)" }}
+        title="Lass uns" titleAccent="reden."
+        sub="Ruf an, schreib oder komm vorbei. Erste Stunde gratis." />
+
+      <Section style={{ padding: isMobile ? "60px 0 100px" : "80px 0 120px" }}>
+        <Container>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1.4fr", gap: isMobile ? 40 : 60, alignItems: "start" }}>
+            <div>
+              <h3 className="reveal" style={{ fontSize: 22, fontWeight: 800, color: T.white, marginBottom: 24 }}>Direkt erreichbar</h3>
+              {[
+                { icon: Phone, label: "Telefon", value: "+49 2191 71683", href: "tel:+49219171683" },
+                { icon: MessageCircle, label: "WhatsApp", value: "+49 177 424 6555", href: "https://wa.me/491774246555" },
+                { icon: Mail, label: "E-Mail", value: "info@beck-up.com", href: "mailto:info@beck-up.com" },
+              ].map((c, i) => {
+                const Icon = c.icon;
+                return (
+                  <a key={i} href={c.href} target={c.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer"
+                    className={`reveal reveal-delay-${i + 1}`}
+                    style={{ display: "flex", gap: 16, alignItems: "center", padding: "16px 20px", borderRadius: 16, marginBottom: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", transition: "background 0.2s" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(124,58,237,0.1)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                  >
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(124,58,237,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: T.violetLi, flexShrink: 0 }}>
+                      <Icon size={21} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: T.textDimmer }}>{c.label}</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: T.white, marginTop: 2 }}>{c.value}</div>
+                    </div>
+                  </a>
+                );
+              })}
+
+              <h3 className="reveal" style={{ fontSize: 20, fontWeight: 800, color: T.white, margin: "36px 0 16px" }}>Standorte</h3>
+              {STANDORTE.map((s, i) => (
+                <div key={i} className={`reveal reveal-delay-${i + 1}`} style={{ display: "flex", gap: 14, alignItems: "flex-start", padding: "14px 18px", borderRadius: 14, marginBottom: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <MapPin size={18} color={T.violetLi} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <div>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase", color: T.textDimmer }}>{s.tag}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: T.text, marginTop: 3 }}>{s.street}, {s.city}</div>
+                  </div>
+                </div>
+              ))}
+
+              <div className="reveal" style={{ marginTop: 28, padding: "16px 20px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: T.textDim, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                  <Clock size={15} /> Öffnungszeiten
+                </div>
+                {[["Mo – Fr", "09:00 – 19:00 Uhr"], ["Samstag", "10:00 – 14:00 Uhr"], ["Sonntag", "geschlossen"]].map(([d, h]) => (
+                  <div key={d} style={{ display: "flex", justifyContent: "space-between", fontSize: 14, padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", color: T.textDim }}>
+                    <span>{d}</span><span style={{ fontWeight: 600, color: h === "geschlossen" ? T.textDimmer : T.text }}>{h}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 24, padding: isMobile ? 24 : 36, boxShadow: SHADOW_MD }}>
-              <h2 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 22 : 26, color: C.primary }}>Schreib uns</h2>
-              <p style={{ marginTop: 8, marginBottom: 22, fontFamily: FF.body, fontSize: 15, lineHeight: 1.6, color: C.textDim }}>
-                Füll einfach aus, was du gerade weißt. Den Rest klären wir im Gespräch.
-              </p>
+            <div className="reveal reveal-delay-2 glass" style={{ borderRadius: 28, padding: isMobile ? 28 : 44 }}>
+              <h3 style={{ fontSize: 24, fontWeight: 800, color: T.white, marginBottom: 8 }}>Schreib uns</h3>
+              <p style={{ fontSize: 15, color: T.textDim, marginBottom: 28 }}>Füll aus was du weißt — den Rest klären wir im Gespräch.</p>
               <ContactForm />
             </div>
           </div>
         </Container>
-      </section>
+      </Section>
       <Footer setPage={setPage} isMobile={isMobile} />
     </main>
   );
@@ -1441,260 +1296,157 @@ function KontaktPage({ setPage, isMobile }) {
    FOOTER
    ============================================================ */
 function Footer({ setPage, isMobile }) {
-  const col = { fontFamily: FF.body, fontSize: 14, lineHeight: 2, color: "rgba(255,255,255,0.7)" };
-  const head = { fontFamily: FF.body, fontSize: 12, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", color: C.goldLi, marginBottom: 14 };
-  const linkBtn = { ...col, display: "block", textAlign: "left", color: "rgba(255,255,255,0.7)" };
+  const go = key => { setPage(key); window.scrollTo({ top: 0, behavior: "auto" }); };
   return (
-    <footer style={{ background: C.primaryDk, color: "#fff", paddingTop: isMobile ? 48 : 72, paddingBottom: isMobile ? 96 : 40 }}>
+    <footer style={{ background: T.bg1, borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: isMobile ? 56 : 80, paddingBottom: isMobile ? 100 : 56 }}>
       <Container>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1.4fr 1fr 1fr 1fr", gap: isMobile ? 32 : 40 }}>
-          <div>
-            <span style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 26, color: "#fff" }}>beck<span style={{ color: C.accent }}>-</span>up</span>
-            <p style={{ marginTop: 14, maxWidth: 280, fontFamily: FF.body, fontSize: 14.5, lineHeight: 1.65, color: "rgba(255,255,255,0.65)" }}>
-              Persönliche Nachhilfe in Remscheid, Klasse 1–13. Präsenz und online, seit 2003.
-            </p>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "2fr 1fr 1fr 1fr", gap: isMobile ? 36 : 48 }}>
+          <div style={{ gridColumn: isMobile ? "1 / -1" : "1" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 9, background: "linear-gradient(135deg, #7c3aed, #06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 17, color: "#fff" }}>b</div>
+              <span style={{ fontWeight: 800, fontSize: 19, color: T.white }}>beck<span style={{ color: T.violetLi }}>-</span>up</span>
+            </div>
+            <p style={{ fontSize: 14, lineHeight: 1.7, color: T.textDimmer, maxWidth: 260 }}>Bildung, Sport und mehr in Remscheid. Persönlich seit 2003.</p>
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-              <a href={TEL_HREF} aria-label="Anrufen" style={{ width: 42, height: 42, borderRadius: 11, background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}><Phone size={19} /></a>
-              <a href={WA_HREF} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" style={{ width: 42, height: 42, borderRadius: 11, background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}><MessageCircle size={19} /></a>
-              <a href={MAIL_HREF} aria-label="E-Mail" style={{ width: 42, height: 42, borderRadius: 11, background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}><Mail size={19} /></a>
+              {[[Phone, "tel:+49219171683", undefined],[MessageCircle, "https://wa.me/491774246555", "_blank"],[Mail, "mailto:info@beck-up.com", undefined]].map(([Icon, href, target], i) => (
+                <a key={i} href={href} target={target} rel={target ? "noopener noreferrer" : undefined} style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", color: T.textDim, transition: "all 0.2s" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(124,58,237,0.2)"; e.currentTarget.style.color = T.violetLi; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = T.textDim; }}>
+                  <Icon size={18} />
+                </a>
+              ))}
             </div>
           </div>
 
-          <div>
-            <div style={head}>Seiten</div>
-            {NAV_LINKS.map((l) => (
-              <button key={l.key} className="bu-navlink" onClick={() => setPage(l.key)} style={linkBtn}>{l.label}</button>
-            ))}
-          </div>
-
-          <div>
-            <div style={head}>Standorte</div>
-            {STANDORTE.map((s, i) => (
-              <div key={i} style={col}>{s.street}<br /><span style={{ fontSize: 13, color: "rgba(255,255,255,0.5)" }}>{s.city}</span></div>
-            ))}
-          </div>
-
-          <div>
-            <div style={head}>Kontakt</div>
-            <a href={TEL_HREF} style={linkBtn}>{TEL}</a>
-            <a href={WA_HREF} target="_blank" rel="noopener noreferrer" style={linkBtn}>{MOBIL}</a>
-            <a href={MAIL_HREF} style={linkBtn}>{MAIL}</a>
-            <div style={{ ...col, marginTop: 10, fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Mo–Fr 09–19 · Sa 10–14 Uhr</div>
-          </div>
+          {[
+            { title: "Angebote", links: [["learning","Learning"],["elearning","eLearning"],["sport","Sport & Freizeit"],["preise","Preise"]] },
+            { title: "Unternehmen", links: [["kontakt","Kontakt"],["kontakt","Jobs"],["home","Über uns"]] },
+            { title: "Rechtliches", links: [["impressum","Impressum"],["datenschutz","Datenschutz"]] },
+          ].map(col => (
+            <div key={col.title}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "1.5px", textTransform: "uppercase", color: T.textDimmer, marginBottom: 16 }}>{col.title}</div>
+              {col.links.map(([key, label]) => (
+                <button key={label} onClick={() => go(key)} style={{ display: "block", fontSize: 14, color: T.textDim, marginBottom: 10, fontWeight: 500, transition: "color 0.2s", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                  onMouseEnter={e => e.currentTarget.style.color = T.white}
+                  onMouseLeave={e => e.currentTarget.style.color = T.textDim}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          ))}
         </div>
 
-        <div style={{ marginTop: isMobile ? 36 : 48, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.1)", display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontFamily: FF.body, fontSize: 13, color: "rgba(255,255,255,0.5)" }}>© {new Date().getFullYear()} beck-up · Nachhilfe in Remscheid</span>
-          <div style={{ display: "flex", gap: 20 }}>
-            <button onClick={() => setPage("impressum")} style={{ fontFamily: FF.body, fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Impressum</button>
-            <button onClick={() => setPage("datenschutz")} style={{ fontFamily: FF.body, fontSize: 13, color: "rgba(255,255,255,0.5)" }}>Datenschutz</button>
-          </div>
+        <div style={{ marginTop: 56, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: 13, color: T.textDimmer }}>© {new Date().getFullYear()} beck-up · Remscheid</span>
+          <span style={{ fontSize: 13, color: T.textDimmer }}>Live, online und mit der richtigen Atmosphäre.</span>
         </div>
       </Container>
     </footer>
   );
 }
-/* ============================================================
-   RECHTLICHES: IMPRESSUM & DATENSCHUTZ
-   Vorlagen mit markierten Platzhaltern – vor Livegang prüfen lassen.
-   ============================================================ */
-function FillIn({ children }) {
-  return (
-    <span style={{ background: C.accentTint, color: C.accentDk, padding: "1px 8px", borderRadius: 6, fontWeight: 700, fontSize: "0.93em", whiteSpace: "nowrap" }}>
-      {children}
-    </span>
-  );
-}
 
-function LegalNote({ children }) {
+/* ============================================================
+   MOBILE BOTTOM BAR
+   ============================================================ */
+function MobileBar({ setPage }) {
   return (
-    <div style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "16px 18px", borderRadius: 14, background: C.goldTint, border: `1px solid ${C.gold}`, marginBottom: 28 }}>
-      <AlertCircle size={20} style={{ color: C.goldDk, flexShrink: 0, marginTop: 1 }} />
-      <p style={{ margin: 0, fontFamily: FF.body, fontSize: 14, lineHeight: 1.6, color: C.goldDk, fontWeight: 600 }}>{children}</p>
+    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 90, height: "calc(60px + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)", background: "rgba(6,6,15,0.95)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "space-around" }}>
+      <a href="tel:+49219171683" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, color: T.textDim, minWidth: 64 }}>
+        <Phone size={21} /><span style={{ fontSize: 10, fontWeight: 700 }}>Anrufen</span>
+      </a>
+      <a href="https://wa.me/491774246555" target="_blank" rel="noopener noreferrer"
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, width: 52, height: 52, marginTop: -10, borderRadius: "50%", background: "linear-gradient(135deg, #7c3aed, #06b6d4)", color: "#fff", justifyContent: "center", boxShadow: "0 8px 24px -4px rgba(124,58,237,0.6)" }}>
+        <MessageCircle size={22} /><span style={{ fontSize: 9, fontWeight: 800 }}>WhatsApp</span>
+      </a>
+      <button onClick={() => setPage("kontakt")} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, color: T.textDim, minWidth: 64 }}>
+        <Mail size={21} /><span style={{ fontSize: 10, fontWeight: 700 }}>Schreiben</span>
+      </button>
     </div>
   );
 }
 
-const lH2 = { fontFamily: FF.display, fontWeight: 800, fontSize: 22, color: C.primary, marginTop: 36, marginBottom: 0 };
-const lH3 = { fontFamily: FF.display, fontWeight: 700, fontSize: 16.5, color: C.primary, marginTop: 22, marginBottom: 0 };
-const lP = { fontFamily: FF.body, fontSize: 15, lineHeight: 1.75, color: C.text, marginTop: 10 };
-const lDim = { ...lP, color: C.textDim };
+/* ============================================================
+   IMPRESSUM & DATENSCHUTZ (Minimal)
+   ============================================================ */
+function LegalPage({ title, children, setPage, isMobile }) {
+  useReveal();
+  return (
+    <main>
+      <Section style={{ paddingTop: 120, paddingBottom: 40 }}>
+        <Container style={{ maxWidth: 760 }}>
+          <h1 style={{ fontSize: isMobile ? 36 : 52, fontWeight: 900, letterSpacing: "-0.03em", color: T.white }}>{title}</h1>
+        </Container>
+      </Section>
+      <Section style={{ paddingBottom: 100 }}>
+        <Container style={{ maxWidth: 760 }}>
+          <div style={{ color: T.textDim, fontSize: 15, lineHeight: 1.85 }}>{children}</div>
+        </Container>
+      </Section>
+      <Footer setPage={setPage} isMobile={isMobile} />
+    </main>
+  );
+}
+
+const lH = { fontSize: 20, fontWeight: 800, color: T.white, margin: "32px 0 10px 0" };
 
 function ImpressumPage({ setPage, isMobile }) {
   return (
-    <main>
-      <PageHeader isMobile={isMobile} pill="Rechtliches" pillColor={C.primary} line1="Impressum" line2="& Angaben." />
-      <section style={{ background: C.bg, ...sectionPad(isMobile, isMobile ? 0 : -20, 0) }}>
-        <Container style={{ maxWidth: 760 }}>
-          <LegalNote>
-            Vorlage. Bitte alle <FillIn>rot markierten</FillIn> Felder ausfüllen und den Text vor dem Livegang rechtlich prüfen lassen. Die Angaben hängen u. a. von Rechtsform und Tätigkeit ab.
-          </LegalNote>
-
-          <h2 style={{ ...lH2, marginTop: 0 }}>Angaben gemäß § 5 DDG</h2>
-          <p style={lP}>
-            <FillIn>[Inhaber:in / Firmenname]</FillIn><br />
-            <FillIn>[Rechtsform, z. B. Einzelunternehmen]</FillIn><br />
-            beck-up<br />
-            Alleestraße 116<br />
-            <FillIn>[PLZ]</FillIn> Remscheid<br />
-            Deutschland
-          </p>
-
-          <h2 style={lH2}>Kontakt</h2>
-          <p style={lP}>
-            Telefon: {TEL}<br />
-            Mobil / WhatsApp: {MOBIL}<br />
-            E-Mail: {MAIL}
-          </p>
-
-          <h2 style={lH2}>Umsatzsteuer-ID</h2>
-          <p style={lP}>
-            Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:<br />
-            <FillIn>[USt-IdNr. einsetzen – oder diesen Abschnitt löschen, falls nicht vorhanden]</FillIn>
-          </p>
-
-          <h2 style={lH2}>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
-          <p style={lP}>
-            <FillIn>[Vor- und Nachname]</FillIn><br />
-            <FillIn>[Anschrift, falls abweichend]</FillIn>
-          </p>
-
-          <h2 style={lH2}>Streitschlichtung</h2>
-          <p style={lDim}>
-            Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
-            <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener noreferrer" style={{ color: C.accent, fontWeight: 600 }}>ec.europa.eu/consumers/odr</a>. Unsere E-Mail-Adresse findest du oben.
-          </p>
-          <p style={lDim}>
-            Wir sind nicht verpflichtet und nicht bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
-          </p>
-
-          <h2 style={lH2}>Haftung für Inhalte</h2>
-          <p style={lDim}>
-            Als Diensteanbieter sind wir für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Wir sind jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen. Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen Gesetzen bleiben hiervon unberührt.
-          </p>
-
-          <h2 style={lH2}>Haftung für Links</h2>
-          <p style={lDim}>
-            Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter verantwortlich. Bei Bekanntwerden von Rechtsverletzungen entfernen wir solche Links umgehend.
-          </p>
-
-          <h2 style={lH2}>Urheberrecht</h2>
-          <p style={lDim}>
-            Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Beiträge Dritter sind als solche gekennzeichnet.
-          </p>
-
-          <div style={{ marginTop: 36 }}>
-            <Button variant="ghost" onClick={() => setPage("datenschutz")}>Zur Datenschutzerklärung <ArrowRight size={18} /></Button>
-          </div>
-        </Container>
-      </section>
-      <Footer setPage={setPage} isMobile={isMobile} />
-    </main>
+    <LegalPage title="Impressum" setPage={setPage} isMobile={isMobile}>
+      <h2 style={lH}>Angaben gemäß § 5 DDG</h2>
+      <p><span style={{ background: "rgba(236,72,153,0.2)", color: T.pinkLi, padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>[Inhaber:in / Firmenname einsetzen]</span><br />beck-up<br />Alleestraße 116<br /><span style={{ background: "rgba(236,72,153,0.2)", color: T.pinkLi, padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>[PLZ]</span> Remscheid</p>
+      <h2 style={lH}>Kontakt</h2>
+      <p>Tel: +49 2191 71683<br />E-Mail: info@beck-up.com</p>
+      <h2 style={lH}>Verantwortlich nach § 18 Abs. 2 MStV</h2>
+      <p><span style={{ background: "rgba(236,72,153,0.2)", color: T.pinkLi, padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>[Vor- und Nachname, Anschrift]</span></p>
+      <h2 style={lH}>Streitschlichtung</h2>
+      <p>Die EU-Kommission stellt eine Plattform zur OS bereit: <a href="https://ec.europa.eu/consumers/odr/" style={{ color: T.violetLi }}>ec.europa.eu/consumers/odr</a>. Wir nehmen nicht an Streitbeilegungsverfahren teil.</p>
+    </LegalPage>
   );
 }
 
 function DatenschutzPage({ setPage, isMobile }) {
   return (
-    <main>
-      <PageHeader isMobile={isMobile} pill="Rechtliches" pillColor={C.primary} line1="Daten" line2="schutz." />
-      <section style={{ background: C.bg, ...sectionPad(isMobile, isMobile ? 0 : -20, 0) }}>
-        <Container style={{ maxWidth: 760 }}>
-          <LegalNote>
-            Muster-Datenschutzerklärung. Sie deckt die aktuell auf dieser Seite eingesetzte Technik ab (Kontaktformular über Web3Forms, Schriftarten von Google). Bitte <FillIn>rot markierte</FillIn> Felder ergänzen und vor dem Livegang rechtlich prüfen lassen.
-          </LegalNote>
-
-          <h2 style={{ ...lH2, marginTop: 0 }}>1. Verantwortlicher</h2>
-          <p style={lP}>
-            Verantwortlich für die Datenverarbeitung auf dieser Website ist:<br />
-            <FillIn>[Name / Firmenname]</FillIn>, beck-up, Alleestraße 116, <FillIn>[PLZ]</FillIn> Remscheid<br />
-            E-Mail: {MAIL} · Telefon: {TEL}
-          </p>
-
-          <h2 style={lH2}>2. Hosting</h2>
-          <p style={lDim}>
-            Diese Website wird bei <FillIn>[Hoster, z. B. Vercel Inc.]</FillIn> gehostet. Der Anbieter verarbeitet dabei in unserem Auftrag technische Daten, die dein Browser automatisch übermittelt (siehe Server-Logfiles). Rechtsgrundlage ist unser berechtigtes Interesse an einer sicheren und stabilen Bereitstellung (Art. 6 Abs. 1 lit. f DSGVO). Sofern erforderlich, besteht mit dem Anbieter ein Auftragsverarbeitungsvertrag.
-          </p>
-
-          <h2 style={lH2}>3. Server-Logfiles</h2>
-          <p style={lDim}>
-            Beim Aufruf der Seite werden automatisch Informationen erfasst, die dein Browser übermittelt: u. a. Browsertyp und -version, verwendetes Betriebssystem, Referrer-URL, Uhrzeit der Anfrage und die IP-Adresse. Diese Daten dienen der technischen Auslieferung und Sicherheit und werden nicht mit anderen Datenquellen zusammengeführt.
-          </p>
-
-          <h2 style={lH2}>4. Kontaktformular</h2>
-          <p style={lP}>
-            Wenn du uns über das Formular eine Anfrage schickst, verarbeiten wir die von dir eingegebenen Daten (z. B. Name, E-Mail, Telefon, Klasse, Fach und dein Anliegen), um die Anfrage zu bearbeiten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b und lit. f DSGVO.
-          </p>
-          <p style={lDim}>
-            Für den Versand nutzen wir den Dienst <b>Web3Forms</b> (Hoodox Innovations). Die Formulardaten werden dabei an die Server von Web3Forms übermittelt und von dort an unsere E-Mail-Adresse weitergeleitet. Mit dem Anbieter besteht – soweit erforderlich – ein Auftragsverarbeitungsvertrag. Details: <a href="https://web3forms.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: C.accent, fontWeight: 600 }}>web3forms.com/privacy</a>. Deine Daten verbleiben bei uns, bis der Zweck entfällt oder du um Löschung bittest.
-          </p>
-
-          <h2 style={lH2}>5. Schriftarten</h2>
-          <p style={lDim}>
-            Diese Seite verwendet die Schriftarten Bricolage Grotesque, Manrope und Fraunces. Die Schriftdateien werden direkt vom eigenen Server ausgeliefert – es findet keine Verbindung zu externen Diensten statt, und es werden dabei keine personenbezogenen Daten übertragen.
-          </p>
-
-          <h2 style={lH2}>6. Cookies & Tracking</h2>
-          <p style={lDim}>
-            Diese Website setzt aktuell keine Cookies und verwendet keine Analyse- oder Tracking-Dienste. Es findet kein Profiling statt.
-          </p>
-
-          <h2 style={lH2}>7. Deine Rechte</h2>
-          <p style={lP}>Du hast jederzeit das Recht auf:</p>
-          <div style={{ marginTop: 8 }}>
-            {["Auskunft über deine gespeicherten Daten (Art. 15 DSGVO)", "Berichtigung unrichtiger Daten (Art. 16 DSGVO)", "Löschung (Art. 17 DSGVO)", "Einschränkung der Verarbeitung (Art. 18 DSGVO)", "Datenübertragbarkeit (Art. 20 DSGVO)", "Widerspruch gegen die Verarbeitung (Art. 21 DSGVO)"].map((r) => (
-              <Marker key={r} color={C.primary}>{r}</Marker>
-            ))}
-          </div>
-          <p style={lDim}>
-            Außerdem hast du das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Zuständig ist in der Regel die Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen (LDI NRW).
-          </p>
-
-          <h2 style={lH2}>8. Aktualität</h2>
-          <p style={lDim}>
-            Stand dieser Erklärung: <FillIn>[Monat / Jahr]</FillIn>. Bei Änderungen an der Website passen wir diese Erklärung entsprechend an.
-          </p>
-
-          <div style={{ marginTop: 36 }}>
-            <Button variant="ghost" onClick={() => setPage("impressum")}>Zum Impressum <ArrowRight size={18} /></Button>
-          </div>
-        </Container>
-      </section>
-      <Footer setPage={setPage} isMobile={isMobile} />
-    </main>
+    <LegalPage title="Datenschutz" setPage={setPage} isMobile={isMobile}>
+      <h2 style={lH}>1. Verantwortlicher</h2>
+      <p><span style={{ background: "rgba(236,72,153,0.2)", color: T.pinkLi, padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>[Name]</span>, beck-up, Alleestraße 116, <span style={{ background: "rgba(236,72,153,0.2)", color: T.pinkLi, padding: "2px 8px", borderRadius: 6, fontWeight: 700 }}>[PLZ]</span> Remscheid · info@beck-up.com</p>
+      <h2 style={lH}>2. Hosting</h2>
+      <p>Diese Website wird bei Vercel Inc. gehostet. Dabei werden technische Daten (u. a. IP-Adresse) verarbeitet. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.</p>
+      <h2 style={lH}>3. Kontaktformular</h2>
+      <p>Formulardaten werden über Web3Forms (Hoodox Innovations) übermittelt und an unsere E-Mail weitergeleitet. Rechtsgrundlage: Art. 6 Abs. 1 lit. b und f DSGVO. Datenschutz Web3Forms: <a href="https://web3forms.com/privacy" style={{ color: T.violetLi }}>web3forms.com/privacy</a></p>
+      <h2 style={lH}>4. Schriftarten</h2>
+      <p>Diese Seite lädt Schriftarten von Google Fonts. Dabei wird deine IP-Adresse an Google übertragen. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO.</p>
+      <h2 style={lH}>5. Cookies & Tracking</h2>
+      <p>Keine Cookies, kein Tracking, kein Profiling.</p>
+      <h2 style={lH}>6. Deine Rechte</h2>
+      <p>Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung (Art. 18), Übertragbarkeit (Art. 20), Widerspruch (Art. 21 DSGVO). Beschwerden: LDI NRW.</p>
+    </LegalPage>
   );
 }
+
 /* ============================================================
-   APP – ROOT & SEITEN-ROUTING
+   APP ROOT
    ============================================================ */
 export default function App() {
   const [page, setPage] = useState("home");
-  const isMobile = useIsMobile(900);
+  const isMobile = useIsMobile();
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "auto" });
-  }, [page]);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "auto" }); }, [page]);
 
   return (
     <>
-      <GlobalStyles />
+      <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
       <Nav page={page} setPage={setPage} isMobile={isMobile} />
 
-      {page === "home" && (
-        <>
-          <Home setPage={setPage} isMobile={isMobile} />
-          <Footer setPage={setPage} isMobile={isMobile} />
-        </>
-      )}
-      {page === "angebote" && <AngebotePage setPage={setPage} isMobile={isMobile} />}
-      {page === "but" && <ButPage setPage={setPage} isMobile={isMobile} />}
-      {page === "jobs" && <JobsPage setPage={setPage} isMobile={isMobile} />}
-      {page === "faq" && <FaqPage setPage={setPage} isMobile={isMobile} />}
-      {page === "kontakt" && <KontaktPage setPage={setPage} isMobile={isMobile} />}
-      {page === "impressum" && <ImpressumPage setPage={setPage} isMobile={isMobile} />}
+      {page === "home"        && <Home setPage={setPage} isMobile={isMobile} />}
+      {page === "learning"    && <LearningPage setPage={setPage} isMobile={isMobile} />}
+      {page === "elearning"   && <ELearningPage setPage={setPage} isMobile={isMobile} />}
+      {page === "sport"       && <SportPage setPage={setPage} isMobile={isMobile} />}
+      {page === "preise"      && <PreisePage setPage={setPage} isMobile={isMobile} />}
+      {page === "kontakt"     && <KontaktPage setPage={setPage} isMobile={isMobile} />}
+      {page === "impressum"   && <ImpressumPage setPage={setPage} isMobile={isMobile} />}
       {page === "datenschutz" && <DatenschutzPage setPage={setPage} isMobile={isMobile} />}
 
-      <ScrollToTop isMobile={isMobile} />
-      {isMobile && <MobileBottomBar setPage={setPage} />}
+      {isMobile && <MobileBar setPage={setPage} />}
     </>
   );
 }
