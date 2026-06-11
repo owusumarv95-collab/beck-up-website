@@ -194,10 +194,24 @@ const GLOBAL_CSS = `
   }
   .clickable:hover {
     transform: translateY(-4px);
-    box-shadow: 0 20px 48px -12px rgba(109,40,217,0.18);
-    border-color: ${C.violetLi} !important;
+    box-shadow: 0 24px 56px -16px rgba(28,25,23,0.22);
+    border-color: ${C.borderHi} !important;
   }
   .clickable:active { transform: translateY(-1px); }
+
+  /* Foto-Karten */
+  .photo-card .card-img {
+    transition: transform 0.6s cubic-bezier(.22,.61,.36,1);
+  }
+  .photo-card:hover .card-img {
+    transform: scale(1.06);
+  }
+  .banner-img {
+    transition: transform 0.7s cubic-bezier(.22,.61,.36,1);
+  }
+  .clickable:hover .banner-img {
+    transform: scale(1.05);
+  }
 
   /* Chip hint */
   .chip-hint {
@@ -242,7 +256,7 @@ const GLOBAL_CSS = `
     transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
     border: none; cursor: pointer;
   }
-  .btn-primary:hover { background: ${C.violetDk}; transform: translateY(-2px); box-shadow: 0 12px 32px -6px rgba(109,40,217,0.45); }
+  .btn-primary:hover { background: ${C.violetDk}; transform: translateY(-2px); box-shadow: 0 14px 36px -8px rgba(109,40,217,0.55); }
   .btn-primary:active { transform: translateY(0); }
 
   .btn-amber {
@@ -253,7 +267,7 @@ const GLOBAL_CSS = `
     transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
     border: none; cursor: pointer;
   }
-  .btn-amber:hover { background: ${C.amberDk}; transform: translateY(-2px); box-shadow: 0 12px 32px -6px rgba(217,119,6,0.45); }
+  .btn-amber:hover { background: ${C.amberDk}; transform: translateY(-2px); box-shadow: 0 14px 36px -8px rgba(217,119,6,0.55); }
 
   .btn-outline {
     display: inline-flex; align-items: center; gap: 8px;
@@ -811,24 +825,57 @@ const DRAWER_DATA = {
 /* ============================================================
    CLICKABLE CARD — universell
    ============================================================ */
+/* ============================================================
+   FOTO-MAP — echte Unsplash-Bilder pro Bereich
+   ============================================================ */
+const uimg = (id, w = 800) => `https://images.unsplash.com/${id}?w=${w}&q=80&auto=format&fit=crop`;
+
+const CARD_IMAGES = {
+  einzelunterricht:  "photo-1509062522246-3755977927d7",
+  gruppenunterricht: "photo-1531545514256-b1400bc00f31",
+  abivorbereitung:   "photo-1730234030296-4d1c4037a872",
+  abinight:          "photo-1501504905252-473c47e087f8",
+  videounterricht:   "photo-1588873281272-14886ba1f737",
+  digitaletafel:     "photo-1565598621680-94ac0c22b148",
+  flexiblezeiten:    "photo-1531545514256-b1400bc00f31",
+  tennistraining:    "photo-1545151414-8a948e1ea54f",
+  gruppentraining:   "photo-1583275478661-1c31970669fa",
+  fitness:           "photo-1571019613454-1cb2f99b2d8b",
+};
+
 function ClickCard({ drawerKey, icon: Icon, color, tint, title, sub, hint = "Mehr erfahren", onOpen, children, style, className }) {
+  const photo = CARD_IMAGES[drawerKey];
   return (
     <div
-      className={`clickable${className ? ` ${className}` : ""}`}
+      className={`clickable photo-card${className ? ` ${className}` : ""}`}
       onClick={() => onOpen(drawerKey)}
-      style={{ background: C.bgCard, border: `1.5px solid ${C.border}`, borderRadius: 20, overflow: "hidden", ...style }}
+      style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 20, overflow: "hidden", display: "flex", flexDirection: "column", ...style }}
     >
       {children || (
-        <div style={{ padding: 28 }}>
-          <div style={{ width: 52, height: 52, borderRadius: 14, background: tint, display: "flex", alignItems: "center", justifyContent: "center", color, marginBottom: 18 }}>
-            <Icon size={26} />
+        <>
+          {/* Foto */}
+          <div style={{ position: "relative", height: 184, overflow: "hidden", background: tint }}>
+            {photo && (
+              <img src={uimg(photo)} alt={title} loading="lazy"
+                className="card-img"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            )}
+            {/* Farb-Tönung unten für Übergang */}
+            <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, transparent 55%, ${C.bgCard})` }} />
+            {/* Icon-Badge schwebend */}
+            <div style={{ position: "absolute", bottom: 14, left: 18, width: 44, height: 44, borderRadius: 12, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", color, boxShadow: "0 6px 18px -4px rgba(0,0,0,0.25)" }}>
+              <Icon size={22} />
+            </div>
           </div>
-          <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 19, color: C.text, lineHeight: 1.25 }}>{title}</h3>
-          <p style={{ marginTop: 8, fontSize: 14, lineHeight: 1.65, color: C.textDim }}>{sub}</p>
-          <div style={{ marginTop: 16 }}>
-            <span className="chip-hint"><MousePointer size={12} />{hint}</span>
+          {/* Text */}
+          <div style={{ padding: "20px 24px 24px", flex: 1, display: "flex", flexDirection: "column" }}>
+            <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 20, color: C.text, lineHeight: 1.2, letterSpacing: "-0.01em" }}>{title}</h3>
+            <p style={{ marginTop: 8, fontSize: 14.5, lineHeight: 1.6, color: C.textDim, flex: 1 }}>{sub}</p>
+            <div style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 7, color, fontWeight: 700, fontSize: 13.5 }}>
+              {hint} <ArrowRight size={15} />
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
@@ -1133,21 +1180,24 @@ function StripeBereiche({ setPage, isMobile }) {
   const cards = [
     {
       key: "learning", title: "Learning", sub: "Nachhilfe Klasse 1–13",
-      gradient: "linear-gradient(135deg, #6D28D9 0%, #4C1D95 55%, #2D1A6E 100%)",
+      gradient: "linear-gradient(135deg, rgba(109,40,217,0.92) 0%, rgba(76,29,149,0.95) 55%, rgba(45,26,110,0.97) 100%)",
+      photo: "photo-1509062522246-3755977927d7",
       anim: "orbs",
       items: ["Einzelunterricht", "Gruppenunterricht", "Abi-Vorbereitung", "Abi-Night"],
       icon: BookOpen, cta: () => setPage("learning"),
     },
     {
       key: "elearning", title: "eLearning", sub: "Online-Unterricht seit 2020",
-      gradient: "linear-gradient(135deg, #0C4A6E 0%, #0891B2 55%, #06B6D4 100%)",
+      gradient: "linear-gradient(135deg, rgba(12,74,110,0.92) 0%, rgba(8,145,178,0.92) 55%, rgba(6,182,212,0.9) 100%)",
+      photo: "photo-1588873281272-14886ba1f737",
       anim: "particles",
       items: ["Video-Unterricht", "Digitale Tafel", "Flexible Zeiten", "Alle Fächer"],
       icon: Monitor, cta: () => setPage("elearning"),
     },
     {
       key: "sport", title: "Sport & Freizeit", sub: "Tennis & Training",
-      gradient: "linear-gradient(135deg, #78350F 0%, #D97706 55%, #F59E0B 100%)",
+      gradient: "linear-gradient(135deg, rgba(120,53,15,0.9) 0%, rgba(217,119,6,0.9) 55%, rgba(245,158,11,0.88) 100%)",
+      photo: "photo-1545151414-8a948e1ea54f",
       anim: "ripple",
       items: ["Tennistraining", "Lizenzierte Trainer", "Gruppentraining", "Mehrere Standorte"],
       icon: Trophy, cta: () => setPage("sport"),
@@ -1163,7 +1213,14 @@ function StripeBereiche({ setPage, isMobile }) {
             className={`clickable reveal reveal-delay-${ci + 1}`}
             onClick={card.cta}
             style={{ borderRadius: 24, overflow: "hidden", cursor: "pointer", minHeight: isMobile ? 320 : 420 }}>
-            <div style={{ position: "relative", background: card.gradient, height: "100%", minHeight: "inherit", overflow: "hidden" }}>
+            <div style={{ position: "relative", height: "100%", minHeight: "inherit", overflow: "hidden" }}>
+              {/* Foto-Hintergrund */}
+              {card.photo && (
+                <img src={uimg(card.photo, 900)} alt="" aria-hidden="true" className="banner-img"
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+              )}
+              {/* Farb-Overlay */}
+              <div style={{ position: "absolute", inset: 0, background: card.gradient }} />
               {/* Hintergrund-Animation je nach Typ */}
               {card.anim === "orbs" && <OrbField />}
               {card.anim === "particles" && <ParticleField />}
@@ -1326,10 +1383,15 @@ function Home({ setPage, isMobile, onOpenDrawer }) {
             <div className="reveal reveal-delay-2" style={{ position: "relative", minHeight: isMobile ? "auto" : 340 }}>
               {!isMobile && (
                 <>
-                  {/* Background card */}
-                  <div style={{ position: "absolute", top: 20, right: 0, width: "92%", background: C.bgAccent, borderRadius: 24, height: 280, border: `1px solid ${C.border}`, transform: "rotate(2deg)" }} />
+                  {/* Foto-Hintergrund */}
+                  <div style={{ position: "absolute", top: 14, right: -10, width: "95%", height: 300, borderRadius: 24, overflow: "hidden", transform: "rotate(2.5deg)", boxShadow: "0 24px 60px -18px rgba(28,25,23,0.35)" }}>
+                    <img src={uimg("photo-1509062522246-3755977927d7", 800)} alt="Nachhilfe bei beck-up" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(109,40,217,0.22), rgba(217,119,6,0.12))" }} />
+                  </div>
                   {/* Main card — rotierend */}
-                  <HeroReviewCard />
+                  <div style={{ position: "relative", marginTop: 36 }}>
+                    <HeroReviewCard />
+                  </div>
                 </>
               )}
               {isMobile && (
