@@ -849,6 +849,7 @@ const NAV_ITEMS = [
   { key: "learning", label: "Learning" },
   { key: "elearning", label: "eLearning" },
   { key: "sport", label: "Sport & Freizeit" },
+  { key: "but", label: "Bildung & Teilhabe" },
   { key: "preise", label: "Preise" },
   { key: "buchen",  label: "Termin buchen" },
   { key: "kontakt", label: "Kontakt" },
@@ -1485,6 +1486,20 @@ function LearningPage({ setPage, isMobile, onOpenDrawer }) {
               </button>
             </div>
           </div>
+
+          {/* BuT-Hinweis Banner */}
+          <div className="reveal clickable" onClick={() => setPage("but")} style={{ marginTop: 18, background: `linear-gradient(135deg, ${C.amberTint}, ${C.bgWarm})`, borderRadius: 20, padding: isMobile ? 24 : 30, border: `1.5px solid ${C.amber}40`, display: "flex", gap: 20, alignItems: "center", flexWrap: "wrap" }}>
+            <div style={{ width: 56, height: 56, borderRadius: 15, background: C.amber, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Heart size={28} />
+            </div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 19 : 22, color: C.text }}>Beziehst du Bürgergeld, Wohngeld oder Kinderzuschlag?</h3>
+              <p style={{ marginTop: 6, fontSize: 14.5, lineHeight: 1.6, color: C.textDim }}>Dann zahlt das Amt die komplette Nachhilfe — über das Bildungs- und Teilhabepaket. Wir zeigen dir wie.</p>
+            </div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, color: C.amberDk, fontWeight: 800, fontSize: 15, flexShrink: 0 }}>
+              Mehr erfahren <ArrowRight size={17} />
+            </div>
+          </div>
         </Container>
       </section>
       <Footer setPage={setPage} isMobile={isMobile} />
@@ -1942,6 +1957,7 @@ export default function App() {
       {page === "impressum"   && <ImpressumPage {...props} />}
       {page === "datenschutz" && <DatenschutzPage {...props} />}
       {page === "buchen"      && <BuchungPage {...props} />}
+      {page === "but"         && <ButPage {...props} />}
 
       {drawer && <Drawer item={drawer} onClose={closeDrawer} />}
       {isMobile && <MobileBar setPage={setPage} />}
@@ -2254,6 +2270,178 @@ function BuchungPage({ setPage, isMobile }) {
 
         </Container>
       </section>
+      <Footer setPage={setPage} isMobile={isMobile} />
+    </main>
+  );
+}
+
+/* ============================================================
+   BUT PAGE — Bildung & Teilhabe
+   ============================================================ */
+const BUT_BERECHTIGTE = [
+  { icon: Heart, title: "Bürgergeld", text: "Empfänger von Bürgergeld (SGB II). Hier gilt das Bildungspaket über den Hauptantrag automatisch als mitbeantragt.", stelle: "Jobcenter Remscheid" },
+  { icon: Users, title: "Wohngeld", text: "Familien, die Wohngeld beziehen. Der Antrag läuft über die Wohngeldstelle der Stadt.", stelle: "Stadt Remscheid" },
+  { icon: GraduationCap, title: "Kinderzuschlag", text: "Wer Kinderzuschlag bekommt, hat ebenfalls Anspruch — beantragt wird bei der Stadt.", stelle: "Stadt Remscheid" },
+  { icon: Shield, title: "Sozialhilfe & AsylbLG", text: "Empfänger von Sozialhilfe (SGB XII) oder Leistungen nach dem Asylbewerberleistungsgesetz.", stelle: "Fachdienst Soziales" },
+];
+
+const BUT_SCHRITTE = [
+  { n: 1, title: "Anspruch prüfen", text: "Beziehst du eine der oben genannten Leistungen? Dann steht deinem Kind die Lernförderung zu. Im Zweifel: einfach bei uns nachfragen, wir helfen beim Einordnen." },
+  { n: 2, title: "Schule bestätigt den Bedarf", text: "Die Schule füllt die Anlage D aus und bestätigt, dass zusätzliche Förderung nötig ist — etwa weil die Versetzung wackelt oder eine Lese-Rechtschreib-Schwäche vorliegt." },
+  { n: 3, title: "Antrag bei der richtigen Stelle", text: "Bei Bürgergeld läuft alles übers Jobcenter Remscheid. Bei Wohngeld oder Kinderzuschlag gehst du zur Stadt. Welche Stelle für dich gilt, steht oben bei den Leistungen." },
+  { n: 4, title: "Wir übernehmen den Rest", text: "Ist der Antrag bewilligt, rechnen wir direkt mit dem Amt ab. Für dich entstehen keine Kosten — dein Kind bekommt einfach die Nachhilfe, die es braucht." },
+];
+
+// Echte Remscheid-Formulare
+const BUT_FORMULARE = [
+  { name: "Grundantrag Bildung & Teilhabe", desc: "Das Hauptformular — hiermit beantragst du alle Leistungen.", url: "https://www.remscheid.de/vv/produkte/1.44/146380100000024009.php.media/9002/Grundantrag.pdf", typ: "PDF" },
+  { name: "Info-Seite Stadt Remscheid", desc: "Alle Anlagen, Ansprechpartner und aktuelle Hinweise der Stadt.", url: "https://www.remscheid.de/vv/produkte/2.50/146380100000024309.php", typ: "Web" },
+  { name: "Jobcenter Remscheid — BuT", desc: "Für Bürgergeld-Empfänger: Infos und Nachweise des Jobcenters.", url: "https://www.jobcenter-remscheid.de/bildung-und-teilhabe.html", typ: "Web" },
+];
+
+function ButPage({ setPage, isMobile }) {
+  useReveal();
+  return (
+    <main>
+      <PageHeader isMobile={isMobile} tag="Bildung & Teilhabe" title="Nachhilfe, die der Staat bezahlt." accent="Wirklich." sub="Viele Familien wissen nicht, dass ihnen Lernförderung zusteht — komplett kostenlos. Wir zeigen dir, wie du rankommst, und helfen beim Antrag." />
+
+      {/* Was ist BuT */}
+      <section style={{ padding: isMobile ? "48px 0" : "72px 0", background: C.bg }}>
+        <Container>
+          <div className="reveal" style={{ maxWidth: 760 }}>
+            <h2 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 28 : 38, letterSpacing: "-0.02em", color: C.text, lineHeight: 1.15 }}>
+              Was steckt dahinter?
+            </h2>
+            <p style={{ marginTop: 18, fontSize: isMobile ? 16 : 17.5, lineHeight: 1.8, color: C.textDim }}>
+              Das Bildungs- und Teilhabepaket — kurz BuT — sorgt dafür, dass kein Kind benachteiligt wird, nur weil zuhause das Geld knapp ist. Dazu gehört auch Nachhilfe. Wenn dein Kind in der Schule hängt und ihr Anspruch habt, übernimmt das Amt die Kosten für die Lernförderung. Vollständig.
+            </p>
+            <p style={{ marginTop: 14, fontSize: isMobile ? 16 : 17.5, lineHeight: 1.8, color: C.textDim }}>
+              Das Beste daran: Wir sind anerkannter Anbieter. Du musst nichts vorstrecken, nichts einreichen, nichts zurückfordern. Der Antrag ist gestellt, wir machen den Rest.
+            </p>
+          </div>
+        </Container>
+      </section>
+
+      {/* Wer hat Anspruch */}
+      <section style={{ padding: isMobile ? "48px 0" : "72px 0", background: C.bgWarm }}>
+        <Container>
+          <div className="reveal" style={{ marginBottom: 36 }}>
+            <span className="tag" style={{ background: C.violetTint, color: C.violet, border: `1px solid rgba(109,40,217,0.2)`, marginBottom: 16, display: "inline-flex" }}>Anspruch</span>
+            <h2 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 28 : 38, letterSpacing: "-0.02em", color: C.text }}>
+              Wer bekommt die Förderung?
+            </h2>
+            <p style={{ marginTop: 14, fontSize: 16, lineHeight: 1.7, color: C.textDim, maxWidth: 600 }}>
+              Beziehst du eine dieser Leistungen, hat dein Kind Anspruch. Die Lernförderung gilt für Schüler bis 25 Jahre, solange sie zur Schule gehen.
+            </p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 16 }}>
+            {BUT_BERECHTIGTE.map((b, i) => {
+              const Icon = b.icon;
+              return (
+                <div key={i} className={`reveal reveal-delay-${Math.min(i + 1, 4)}`} style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 20, padding: 26, display: "flex", gap: 18, alignItems: "flex-start" }}>
+                  <div style={{ width: 48, height: 48, borderRadius: 13, background: C.violetTint, display: "flex", alignItems: "center", justifyContent: "center", color: C.violet, flexShrink: 0 }}>
+                    <Icon size={24} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 19, color: C.text }}>{b.title}</h3>
+                    <p style={{ marginTop: 8, fontSize: 14.5, lineHeight: 1.65, color: C.textDim }}>{b.text}</p>
+                    <div style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 999, background: C.bgWarm, border: `1px solid ${C.border}`, fontSize: 12.5, fontWeight: 700, color: C.violet }}>
+                      <MapPin size={13} /> {b.stelle}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Container>
+      </section>
+
+      {/* So beantragst du es */}
+      <section style={{ padding: isMobile ? "48px 0" : "72px 0", background: C.bg }}>
+        <Container>
+          <div className="reveal" style={{ marginBottom: 40 }}>
+            <span className="tag" style={{ background: C.amberTint, color: C.amber, border: `1px solid rgba(217,119,6,0.2)`, marginBottom: 16, display: "inline-flex" }}>In 4 Schritten</span>
+            <h2 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 28 : 38, letterSpacing: "-0.02em", color: C.text }}>
+              So kommst du an die Lernförderung.
+            </h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: 18 }}>
+            {BUT_SCHRITTE.map((s, i) => (
+              <div key={i} className={`reveal reveal-delay-${Math.min(i + 1, 4)}`} style={{ background: C.bgWarm, borderRadius: 20, padding: 28, border: `1px solid ${C.border}`, position: "relative" }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: C.violet, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FF.display, fontWeight: 900, fontSize: 20, marginBottom: 16 }}>
+                  {s.n}
+                </div>
+                <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 19, color: C.text }}>{s.title}</h3>
+                <p style={{ marginTop: 10, fontSize: 15, lineHeight: 1.7, color: C.textDim }}>{s.text}</p>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* Formulare Download */}
+      <section style={{ padding: isMobile ? "48px 0" : "72px 0", background: C.bgWarm }}>
+        <Container>
+          <div className="reveal" style={{ marginBottom: 32 }}>
+            <span className="tag" style={{ background: C.greenTint, color: C.green, border: `1px solid rgba(5,150,105,0.2)`, marginBottom: 16, display: "inline-flex" }}>Download</span>
+            <h2 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 28 : 38, letterSpacing: "-0.02em", color: C.text }}>
+              Formulare & Anträge.
+            </h2>
+            <p style={{ marginTop: 14, fontSize: 16, lineHeight: 1.7, color: C.textDim, maxWidth: 600 }}>
+              Hier kommst du direkt zu den offiziellen Unterlagen der Stadt Remscheid. Lad sie dir runter, druck sie aus — oder bring sie mit, wir füllen sie zusammen aus.
+            </p>
+          </div>
+          <div style={{ display: "grid", gap: 12 }}>
+            {BUT_FORMULARE.map((f, i) => (
+              <a key={i} href={f.url} target="_blank" rel="noopener noreferrer"
+                className={`reveal reveal-delay-${Math.min(i + 1, 4)}`}
+                style={{ display: "flex", gap: 18, alignItems: "center", padding: isMobile ? "18px 20px" : "22px 26px", borderRadius: 18, background: C.bgCard, border: `1.5px solid ${C.border}`, transition: "border-color 0.2s, transform 0.2s", textDecoration: "none" }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = C.violet; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.transform = "translateY(0)"; }}>
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: f.typ === "PDF" ? C.coralTint : C.violetTint, display: "flex", alignItems: "center", justifyContent: "center", color: f.typ === "PDF" ? C.coral : C.violet, flexShrink: 0 }}>
+                  {f.typ === "PDF" ? <BookOpen size={24} /> : <Globe size={24} />}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 16 : 18, color: C.text }}>{f.name}</h3>
+                    <span style={{ padding: "3px 9px", borderRadius: 6, background: f.typ === "PDF" ? C.coralTint : C.violetTint, color: f.typ === "PDF" ? C.coral : C.violet, fontSize: 11, fontWeight: 800, letterSpacing: "0.5px" }}>{f.typ}</span>
+                  </div>
+                  <p style={{ marginTop: 4, fontSize: 14, lineHeight: 1.5, color: C.textDim }}>{f.desc}</p>
+                </div>
+                <div style={{ flexShrink: 0, color: C.violet }}>
+                  <ArrowUpRight size={22} />
+                </div>
+              </a>
+            ))}
+          </div>
+          <p style={{ marginTop: 20, fontSize: 13, color: C.textDimmer, lineHeight: 1.6 }}>
+            Hinweis: Die Formulare werden von der Stadt Remscheid bereitgestellt. Welche genau du brauchst, hängt von deiner Leistung ab — frag uns einfach, wir kennen den Weg.
+          </p>
+        </Container>
+      </section>
+
+      {/* CTA */}
+      <section style={{ padding: isMobile ? "56px 0" : "88px 0", background: C.violet }}>
+        <Container>
+          <div className="reveal" style={{ textAlign: "center", maxWidth: 600, margin: "0 auto" }}>
+            <h2 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 30 : 46, letterSpacing: "-0.03em", color: "#fff", lineHeight: 1.12 }}>
+              Unsicher, ob's bei euch klappt?
+            </h2>
+            <p style={{ marginTop: 18, fontSize: 17, lineHeight: 1.65, color: "rgba(255,255,255,0.82)" }}>
+              Ruf an oder schreib uns. Wir schauen gemeinsam, ob ihr Anspruch habt, und begleiten dich durch den ganzen Antrag — ohne Behörden-Kauderwelsch.
+            </p>
+            <div style={{ marginTop: 32, display: "flex", flexWrap: "wrap", gap: 14, justifyContent: "center" }}>
+              <a href="tel:+49219171683" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", borderRadius: 12, background: "#fff", color: C.violet, fontWeight: 800, fontSize: 16, textDecoration: "none" }}>
+                <Phone size={18} /> +49 2191 71683
+              </a>
+              <a href="https://wa.me/491774246555" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", borderRadius: 12, background: "rgba(255,255,255,0.15)", color: "#fff", fontWeight: 700, fontSize: 16, border: "1.5px solid rgba(255,255,255,0.4)", textDecoration: "none" }}>
+                <MessageCircle size={18} /> WhatsApp
+              </a>
+            </div>
+          </div>
+        </Container>
+      </section>
+
       <Footer setPage={setPage} isMobile={isMobile} />
     </main>
   );
