@@ -1176,8 +1176,8 @@ function StripeBereiche({ setPage, isMobile }) {
                 <div style={{ width: 52, height: 52, borderRadius: 14, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", marginBottom: 20 }}>
                   <Icon size={26} />
                 </div>
-                <div style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 26 : 30, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.15 }}>{card.title}</div>
-                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 6 }}>{card.sub}</div>
+                <div style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 28 : 34, color: "#fff", letterSpacing: "-0.025em", lineHeight: 1.1 }}>{card.title}</div>
+                <div style={{ fontSize: 15, color: "rgba(255,255,255,0.75)", marginTop: 8, fontWeight: 500 }}>{card.sub}</div>
 
                 <div style={{ marginTop: "auto", paddingTop: 24, display: "flex", flexDirection: "column", gap: 8 }}>
                   {card.items.map((item, ii) => (
@@ -1185,12 +1185,12 @@ function StripeBereiche({ setPage, isMobile }) {
                       <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <CheckCircle2 size={12} color="#fff" />
                       </div>
-                      <span style={{ fontSize: 14, color: "rgba(255,255,255,0.9)", fontWeight: 500 }}>{item}</span>
+                      <span style={{ fontSize: 15, color: "rgba(255,255,255,0.92)", fontWeight: 600 }}>{item}</span>
                     </div>
                   ))}
                 </div>
 
-                <div style={{ marginTop: 24, display: "inline-flex", alignItems: "center", gap: 8, color: "#fff", fontWeight: 700, fontSize: 15, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", padding: "10px 18px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.25)", alignSelf: "flex-start" }}>
+                <div style={{ marginTop: 24, display: "inline-flex", alignItems: "center", gap: 8, color: "#fff", fontWeight: 800, fontSize: 15, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(10px)", padding: "11px 20px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.25)", alignSelf: "flex-start" }}>
                   Mehr erfahren <ArrowRight size={16} />
                 </div>
               </div>
@@ -1198,6 +1198,62 @@ function StripeBereiche({ setPage, isMobile }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/* ============================================================
+   HERO REVIEW CARD — rotierende Rezension in der Hero-Karte
+   ============================================================ */
+const HERO_REVIEWS = [
+  { name: "Amelie", role: "Google-Rezension", text: "Super gute Nachhilfe sowohl live als auch online! Vor allem die Abiturvorbereitung kann ich nur empfehlen. Danke Andy!", tags: ["Mathe", "Deutsch", "Englisch", "Abitur"] },
+  { name: "Luis", role: "Gruppennachhilfe online", text: "Die Aufgaben nochmals durchzugehen, war sehr gut für das Verständnis. Sehr gute Stunde.", tags: ["Mathe", "Gruppe", "Online"] },
+  { name: "Daniel", role: "Einzel-Teaching online", text: "Ausführlich, nicht zu schnell und gut strukturiert. Genau so muss Nachhilfe sein.", tags: ["Einzel", "Online", "Struktur"] },
+  { name: "Pia", role: "Einzel-Teaching online", text: "Gute Alternative in dieser Zeit! Hat mir sehr geholfen, danke 🙂", tags: ["Einzel", "Online"] },
+  { name: "Mohamad Y.", role: "Abi-Night", text: "Es war sehr gut und hilfreich! Ich hoffe wir können es mehrmals wiederholen.", tags: ["Abi-Night", "Prüfung"] },
+];
+
+function HeroReviewCard() {
+  const [active, setActive] = useState(0);
+  const [fade, setFade] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setFade(true);
+      setTimeout(() => {
+        setActive(prev => (prev + 1) % HERO_REVIEWS.length);
+        setFade(false);
+      }, 280);
+    }, 3800);
+    return () => clearInterval(id);
+  }, []);
+
+  const r = HERO_REVIEWS[active];
+
+  return (
+    <div style={{ position: "relative", background: C.bgCard, borderRadius: 24, padding: 28, border: `1px solid ${C.border}`, boxShadow: "0 24px 64px -16px rgba(0,0,0,0.12)", minHeight: 280 }}>
+      <div style={{ opacity: fade ? 0 : 1, transform: fade ? "translateY(8px)" : "translateY(0)", transition: "opacity 0.28s ease, transform 0.28s ease" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+          <div style={{ width: 40, height: 40, borderRadius: "50%", background: C.violetTint, display: "flex", alignItems: "center", justifyContent: "center", color: C.violet, fontFamily: FF.display, fontWeight: 900, fontSize: 17 }}>{r.name[0]}</div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: C.text }}>{r.name}</div>
+            <div style={{ fontSize: 12, color: C.textDim }}>{r.role} ⭐⭐⭐⭐⭐</div>
+          </div>
+        </div>
+        <p style={{ fontStyle: "italic", fontSize: 15, lineHeight: 1.7, color: C.textDim, minHeight: 80 }}>„{r.text}"</p>
+        <div style={{ height: 1, background: C.border, margin: "18px 0" }} />
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {r.tags.map(t => (
+            <span key={t} style={{ padding: "5px 12px", borderRadius: 999, background: C.violetTint, color: C.violet, fontSize: 12, fontWeight: 700 }}>{t}</span>
+          ))}
+        </div>
+      </div>
+      {/* Dots */}
+      <div style={{ display: "flex", gap: 6, marginTop: 20, justifyContent: "center" }}>
+        {HERO_REVIEWS.map((_, i) => (
+          <div key={i} style={{ width: i === active ? 18 : 6, height: 6, borderRadius: 999, background: i === active ? C.violet : C.border, transition: "all 0.3s ease" }} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -1271,23 +1327,8 @@ function Home({ setPage, isMobile, onOpenDrawer }) {
                 <>
                   {/* Background card */}
                   <div style={{ position: "absolute", top: 20, right: 0, width: "92%", background: C.bgAccent, borderRadius: 24, height: 280, border: `1px solid ${C.border}`, transform: "rotate(2deg)" }} />
-                  {/* Main card */}
-                  <div style={{ position: "relative", background: C.bgCard, borderRadius: 24, padding: 28, border: `1px solid ${C.border}`, boxShadow: "0 24px 64px -16px rgba(0,0,0,0.12)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: "50%", background: C.violetTint, display: "flex", alignItems: "center", justifyContent: "center", color: C.violet, fontFamily: FF.display, fontWeight: 900, fontSize: 17 }}>A</div>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: 14, color: C.text }}>Amelie</div>
-                        <div style={{ fontSize: 12, color: C.textDim }}>Google-Rezension ⭐⭐⭐⭐⭐</div>
-                      </div>
-                    </div>
-                    <p style={{ fontStyle: "italic", fontSize: 15, lineHeight: 1.7, color: C.textDim }}>„Super gute Nachhilfe sowohl live als auch online! Vor allem die Abiturvorbereitung kann ich nur empfehlen. Danke Andy!"</p>
-                    <div style={{ height: 1, background: C.border, margin: "18px 0" }} />
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                      {["Mathe", "Deutsch", "Englisch", "Abitur"].map(t => (
-                        <span key={t} style={{ padding: "5px 12px", borderRadius: 999, background: C.violetTint, color: C.violet, fontSize: 12, fontWeight: 700 }}>{t}</span>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Main card — rotierend */}
+                  <HeroReviewCard />
                 </>
               )}
               {isMobile && (
