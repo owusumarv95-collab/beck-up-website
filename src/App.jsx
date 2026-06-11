@@ -101,6 +101,34 @@ const GLOBAL_CSS = `
     0%, 100% { transform: translateY(0); }
     50%       { transform: translateY(-8px); }
   }
+  @keyframes orbA {
+    0%   { transform: translate(0px, 0px) scale(1); }
+    25%  { transform: translate(30px, -25px) scale(1.1); }
+    50%  { transform: translate(-20px, 30px) scale(0.92); }
+    75%  { transform: translate(25px, 15px) scale(1.05); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+  @keyframes orbB {
+    0%   { transform: translate(0px, 0px) scale(1) rotate(0deg); }
+    33%  { transform: translate(-35px, 20px) scale(1.15) rotate(6deg); }
+    66%  { transform: translate(20px, -30px) scale(0.88) rotate(-4deg); }
+    100% { transform: translate(0px, 0px) scale(1) rotate(0deg); }
+  }
+  @keyframes orbC {
+    0%   { transform: translate(0px, 0px) scale(1); }
+    40%  { transform: translate(40px, 25px) scale(0.9); }
+    80%  { transform: translate(-15px, -20px) scale(1.12); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+  @keyframes gradientShift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes shimmerLine {
+    0%   { transform: translateX(-100%) skewX(-12deg); }
+    100% { transform: translateX(300%) skewX(-12deg); }
+  }
   @keyframes pulse {
     0%, 100% { opacity: 1; transform: scale(1); }
     50%       { opacity: 0.7; transform: scale(0.95); }
@@ -467,7 +495,7 @@ function Drawer({ item, onClose }) {
             </div>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "1.5px", textTransform: "uppercase", color: C.textDimmer }}>{item.parent}</div>
-              <div style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 18, color: C.text }}>{item.title}</div>
+              <div style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 22, color: C.text, letterSpacing: "-0.01em" }}>{item.title}</div>
             </div>
           </div>
           <button onClick={close} style={{ width: 40, height: 40, borderRadius: "50%", background: C.bgWarm, display: "flex", alignItems: "center", justifyContent: "center", color: C.textDim, transition: "background 0.2s, color 0.2s" }}
@@ -491,12 +519,12 @@ function Drawer({ item, onClose }) {
         {/* Content */}
         <div style={{ padding: "32px 28px 48px" }}>
           {/* Tagline */}
-          <p style={{ fontSize: 17, lineHeight: 1.75, color: C.textDim, fontWeight: 400 }}>{item.description}</p>
+          <p style={{ fontSize: 18, lineHeight: 1.75, color: C.text, fontWeight: 400 }}>{item.description}</p>
 
           {/* Was ist das */}
           {item.what && (
             <div style={{ marginTop: 28 }}>
-              <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 16, color: C.text, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 19, color: C.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
                 <Lightbulb size={18} color={item.color} /> Was ist das?
               </h3>
               <p style={{ fontSize: 15, lineHeight: 1.75, color: C.textDim }}>{item.what}</p>
@@ -506,14 +534,14 @@ function Drawer({ item, onClose }) {
           {/* Vorteile */}
           {item.benefits && (
             <div style={{ marginTop: 28 }}>
-              <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 16, color: C.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 19, color: C.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
                 <TrendingUp size={18} color={item.color} /> Vorteile
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {item.benefits.map((b, i) => (
                   <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "12px 16px", borderRadius: 12, background: C.bgWarm, border: `1px solid ${C.border}` }}>
                     <CheckCheck size={18} color={item.color} style={{ flexShrink: 0, marginTop: 1 }} />
-                    <span style={{ fontSize: 14.5, lineHeight: 1.6, color: C.text }}>{b}</span>
+                    <span style={{ fontSize: 15.5, lineHeight: 1.6, color: C.text, fontWeight: 500 }}>{b}</span>
                   </div>
                 ))}
               </div>
@@ -523,7 +551,7 @@ function Drawer({ item, onClose }) {
           {/* Ablauf */}
           {item.steps && (
             <div style={{ marginTop: 28 }}>
-              <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 16, color: C.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 19, color: C.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
                 <Target size={18} color={item.color} /> So läuft's ab
               </h3>
               <div style={{ position: "relative", paddingLeft: 28 }}>
@@ -531,8 +559,8 @@ function Drawer({ item, onClose }) {
                 {item.steps.map((s, i) => (
                   <div key={i} style={{ position: "relative", marginBottom: 20 }}>
                     <div style={{ position: "absolute", left: -28, top: 2, width: 18, height: 18, borderRadius: "50%", background: item.color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800 }}>{i + 1}</div>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: C.text }}>{s.title}</div>
-                    <div style={{ fontSize: 13.5, lineHeight: 1.6, color: C.textDim, marginTop: 4 }}>{s.text}</div>
+                    <div style={{ fontWeight: 800, fontSize: 16, color: C.text, fontFamily: FF.display }}>{s.title}</div>
+                    <div style={{ fontSize: 15, lineHeight: 1.65, color: C.textDim, marginTop: 4 }}>{s.text}</div>
                   </div>
                 ))}
               </div>
@@ -542,7 +570,7 @@ function Drawer({ item, onClose }) {
           {/* Was wird benötigt */}
           {item.requirements && (
             <div style={{ marginTop: 28 }}>
-              <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 16, color: C.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 19, color: C.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
                 <Shield size={18} color={item.color} /> Was wird benötigt?
               </h3>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
@@ -909,21 +937,34 @@ const ALL_REVIEWS = [
 function ReviewCarousel({ isMobile }) {
   const [active, setActive] = useState(0);
   const [animating, setAnimating] = useState(false);
+  const animatingRef = useRef(false);
   const timerRef = useRef(null);
 
-  const goTo = (idx) => {
-    if (animating) return;
+  const goTo = useCallback((idx) => {
+    if (animatingRef.current) return;
+    animatingRef.current = true;
     setAnimating(true);
     setTimeout(() => {
       setActive((idx + ALL_REVIEWS.length) % ALL_REVIEWS.length);
       setAnimating(false);
-    }, 300);
-  };
+      animatingRef.current = false;
+    }, 350);
+  }, []);
 
+  // Auto-advance using functional setState to avoid stale closure
   useEffect(() => {
-    timerRef.current = setInterval(() => goTo(active + 1), 4000);
+    timerRef.current = setInterval(() => {
+      if (animatingRef.current) return;
+      animatingRef.current = true;
+      setAnimating(true);
+      setTimeout(() => {
+        setActive(prev => (prev + 1) % ALL_REVIEWS.length);
+        setAnimating(false);
+        animatingRef.current = false;
+      }, 350);
+    }, 4200);
     return () => clearInterval(timerRef.current);
-  }, [active]);
+  }, []);
 
   const r = ALL_REVIEWS[active];
 
@@ -999,15 +1040,19 @@ function ReviewCarousel({ isMobile }) {
 /* ============================================================
    STRIPE-STYLE BEREICHE BANNER — animierte Feature-Karten
    ============================================================ */
-function AnimatedOrb({ color, size, top, left, right, bottom, delay = "0s" }) {
+const ORB_ANIMS = ["orbA 14s ease-in-out infinite", "orbB 18s ease-in-out infinite", "orbC 11s ease-in-out infinite"];
+
+function AnimatedOrb({ color, size, top, left, right, bottom, delay = "0s", animIdx = 0 }) {
   return (
     <div style={{
       position: "absolute", width: size, height: size, borderRadius: "50%",
-      background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
+      background: `radial-gradient(circle at 40% 40%, ${color} 0%, transparent 65%)`,
       top, left, right, bottom,
-      animation: `meshMove ${12 + Math.random() * 8}s ease-in-out infinite`,
+      filter: "blur(2px)",
+      animation: ORB_ANIMS[animIdx % 3],
       animationDelay: delay,
       pointerEvents: "none",
+      willChange: "transform",
     }} />
   );
 }
@@ -1067,11 +1112,13 @@ function StripeBereiche({ setPage, isMobile }) {
             className={`clickable reveal reveal-delay-${ci + 1}`}
             onClick={card.cta}
             style={{ borderRadius: 24, overflow: "hidden", cursor: "pointer", minHeight: isMobile ? 320 : 420 }}>
-            <div style={{ position: "relative", background: card.gradient, height: "100%", minHeight: "inherit", overflow: "hidden" }}>
+            <div style={{ position: "relative", background: card.gradient, backgroundSize: "200% 200%", height: "100%", minHeight: "inherit", overflow: "hidden", animation: "gradientShift 8s ease infinite" }}>
               {/* Animated orbs inside banner */}
               {card.orbs.map((orb, oi) => (
-                <AnimatedOrb key={oi} {...orb} delay={`${oi * 1.5}s`} />
+                <AnimatedOrb key={oi} {...orb} delay={`${oi * 1.2}s`} animIdx={oi} />
               ))}
+              {/* Shimmer sweep */}
+              <div style={{ position: "absolute", top: 0, left: 0, width: "40%", height: "100%", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)", animation: "shimmerLine 4s ease-in-out infinite", animationDelay: `${ci * 0.8}s`, pointerEvents: "none" }} />
               {/* Dot grid overlay */}
               <div style={{ position: "absolute", inset: 0, opacity: 0.06, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
 
