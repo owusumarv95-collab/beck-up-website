@@ -120,6 +120,21 @@ const GLOBAL_CSS = `
     80%  { transform: translate(-15px, -20px) scale(1.12); }
     100% { transform: translate(0px, 0px) scale(1); }
   }
+  @keyframes orbSmall {
+    0%   { transform: translate(0,0) scale(1); }
+    50%  { transform: translate(15px,-18px) scale(1.15); }
+    100% { transform: translate(0,0) scale(1); }
+  }
+  @keyframes riseUp {
+    0%   { transform: translateY(20px) translateX(0); opacity: 0; }
+    15%  { opacity: 0.9; }
+    85%  { opacity: 0.9; }
+    100% { transform: translateY(-380px) translateX(20px); opacity: 0; }
+  }
+  @keyframes ripple {
+    0%   { transform: scale(0.4); opacity: 0.55; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
   @keyframes gradientShift {
     0%   { background-position: 0% 50%; }
     50%  { background-position: 100% 50%; }
@@ -519,13 +534,13 @@ function Drawer({ item, onClose }) {
         {/* Content */}
         <div style={{ padding: "32px 28px 48px" }}>
           {/* Tagline */}
-          <p style={{ fontSize: 18, lineHeight: 1.75, color: C.text, fontWeight: 400 }}>{item.description}</p>
+          <p style={{ fontSize: 16, lineHeight: 1.7, color: C.textDim, fontWeight: 400 }}>{item.description}</p>
 
           {/* Was ist das */}
           {item.what && (
-            <div style={{ marginTop: 28 }}>
-              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 19, color: C.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
-                <Lightbulb size={18} color={item.color} /> Was ist das?
+            <div style={{ marginTop: 34 }}>
+              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 22, color: C.text, marginBottom: 16, display: "flex", alignItems: "center", gap: 9 }}>
+                <Lightbulb size={20} color={item.color} /> Was ist das?
               </h3>
               <p style={{ fontSize: 15, lineHeight: 1.75, color: C.textDim }}>{item.what}</p>
             </div>
@@ -533,9 +548,9 @@ function Drawer({ item, onClose }) {
 
           {/* Vorteile */}
           {item.benefits && (
-            <div style={{ marginTop: 28 }}>
-              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 19, color: C.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
-                <TrendingUp size={18} color={item.color} /> Vorteile
+            <div style={{ marginTop: 34 }}>
+              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 22, color: C.text, marginBottom: 16, display: "flex", alignItems: "center", gap: 9 }}>
+                <TrendingUp size={20} color={item.color} /> Vorteile
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {item.benefits.map((b, i) => (
@@ -550,9 +565,9 @@ function Drawer({ item, onClose }) {
 
           {/* Ablauf */}
           {item.steps && (
-            <div style={{ marginTop: 28 }}>
-              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 19, color: C.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
-                <Target size={18} color={item.color} /> So läuft's ab
+            <div style={{ marginTop: 34 }}>
+              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 22, color: C.text, marginBottom: 16, display: "flex", alignItems: "center", gap: 9 }}>
+                <Target size={20} color={item.color} /> So läuft's ab
               </h3>
               <div style={{ position: "relative", paddingLeft: 28 }}>
                 <div style={{ position: "absolute", left: 10, top: 8, bottom: 8, width: 2, background: `linear-gradient(180deg, ${item.color}, transparent)` }} />
@@ -569,9 +584,9 @@ function Drawer({ item, onClose }) {
 
           {/* Was wird benötigt */}
           {item.requirements && (
-            <div style={{ marginTop: 28 }}>
-              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 19, color: C.text, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
-                <Shield size={18} color={item.color} /> Was wird benötigt?
+            <div style={{ marginTop: 34 }}>
+              <h3 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: 22, color: C.text, marginBottom: 16, display: "flex", alignItems: "center", gap: 9 }}>
+                <Shield size={20} color={item.color} /> Was wird benötigt?
               </h3>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {item.requirements.map((r, i) => (
@@ -937,33 +952,26 @@ const ALL_REVIEWS = [
 function ReviewCarousel({ isMobile }) {
   const [active, setActive] = useState(0);
   const [animating, setAnimating] = useState(false);
-  const animatingRef = useRef(false);
-  const timerRef = useRef(null);
 
-  const goTo = useCallback((idx) => {
-    if (animatingRef.current) return;
-    animatingRef.current = true;
+  // Manuelles Wechseln (Pfeile / Dots)
+  const goTo = (idx) => {
     setAnimating(true);
     setTimeout(() => {
       setActive((idx + ALL_REVIEWS.length) % ALL_REVIEWS.length);
       setAnimating(false);
-      animatingRef.current = false;
-    }, 350);
-  }, []);
+    }, 280);
+  };
 
-  // Auto-advance using functional setState to avoid stale closure
+  // Auto-Rotation — funktionales setState, immun gegen stale closure & StrictMode
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      if (animatingRef.current) return;
-      animatingRef.current = true;
+    const id = setInterval(() => {
       setAnimating(true);
       setTimeout(() => {
         setActive(prev => (prev + 1) % ALL_REVIEWS.length);
         setAnimating(false);
-        animatingRef.current = false;
-      }, 350);
-    }, 4200);
-    return () => clearInterval(timerRef.current);
+      }, 280);
+    }, 3800);
+    return () => clearInterval(id);
   }, []);
 
   const r = ALL_REVIEWS[active];
@@ -1040,66 +1048,108 @@ function ReviewCarousel({ isMobile }) {
 /* ============================================================
    STRIPE-STYLE BEREICHE BANNER — animierte Feature-Karten
    ============================================================ */
-const ORB_ANIMS = ["orbA 14s ease-in-out infinite", "orbB 18s ease-in-out infinite", "orbC 11s ease-in-out infinite"];
+/* ── Animationstyp 1: viele kleine Orbs (nur Learning-Banner) ── */
+const SMALL_ORB_ANIMS = ["orbA 13s", "orbB 16s", "orbC 11s", "orbSmall 9s", "orbA 18s", "orbB 14s"];
 
-function AnimatedOrb({ color, size, top, left, right, bottom, delay = "0s", animIdx = 0 }) {
+function OrbField() {
+  // 10 kleine Orbs, gestreut
+  const orbs = [
+    { c: "rgba(196,181,253,0.55)", s: 70, t: "10%", l: "8%" },
+    { c: "rgba(167,139,250,0.5)",  s: 50, t: "55%", l: "20%" },
+    { c: "rgba(221,214,254,0.45)", s: 90, t: "25%", l: "65%" },
+    { c: "rgba(139,92,246,0.4)",   s: 45, t: "70%", l: "78%" },
+    { c: "rgba(196,181,253,0.5)",  s: 60, t: "5%",  l: "45%" },
+    { c: "rgba(167,139,250,0.45)", s: 38, t: "80%", l: "40%" },
+    { c: "rgba(221,214,254,0.4)",  s: 55, t: "45%", l: "88%" },
+    { c: "rgba(139,92,246,0.5)",   s: 42, t: "35%", l: "30%" },
+    { c: "rgba(196,181,253,0.4)",  s: 65, t: "88%", l: "62%" },
+    { c: "rgba(167,139,250,0.5)",  s: 48, t: "60%", l: "55%" },
+  ];
   return (
-    <div style={{
-      position: "absolute", width: size, height: size, borderRadius: "50%",
-      background: `radial-gradient(circle at 40% 40%, ${color} 0%, transparent 65%)`,
-      top, left, right, bottom,
-      filter: "blur(2px)",
-      animation: ORB_ANIMS[animIdx % 3],
-      animationDelay: delay,
-      pointerEvents: "none",
-      willChange: "transform",
-    }} />
+    <>
+      {orbs.map((o, i) => (
+        <div key={i} style={{
+          position: "absolute", width: o.s, height: o.s, borderRadius: "50%",
+          background: `radial-gradient(circle at 40% 40%, ${o.c} 0%, transparent 68%)`,
+          top: o.t, left: o.l, filter: "blur(1px)",
+          animation: `${SMALL_ORB_ANIMS[i % SMALL_ORB_ANIMS.length]} ease-in-out infinite`,
+          animationDelay: `${i * 0.7}s`, pointerEvents: "none", willChange: "transform",
+        }} />
+      ))}
+    </>
+  );
+}
+
+/* ── Animationstyp 2: aufsteigende Partikel (eLearning-Banner) ── */
+function ParticleField() {
+  const particles = Array.from({ length: 18 }, (_, i) => ({
+    left: `${(i * 5.5 + 3) % 96}%`,
+    size: 4 + (i % 4) * 2,
+    delay: `${(i * 0.5) % 7}s`,
+    dur: `${7 + (i % 5)}s`,
+  }));
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+      {particles.map((p, i) => (
+        <div key={i} style={{
+          position: "absolute", bottom: 0, left: p.left,
+          width: p.size, height: p.size, borderRadius: "50%",
+          background: "rgba(165,243,252,0.85)",
+          boxShadow: "0 0 8px rgba(103,232,249,0.6)",
+          animation: `riseUp ${p.dur} linear infinite`,
+          animationDelay: p.delay, willChange: "transform, opacity",
+        }} />
+      ))}
+    </div>
+  );
+}
+
+/* ── Animationstyp 3: pulsierende Ringe (Sport-Banner) ── */
+function RippleField() {
+  const rings = [
+    { t: "30%", l: "25%", delay: "0s" },
+    { t: "60%", l: "70%", delay: "1.3s" },
+    { t: "20%", l: "75%", delay: "2.6s" },
+    { t: "75%", l: "30%", delay: "3.4s" },
+  ];
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+      {rings.map((r, i) => (
+        <div key={i} style={{ position: "absolute", top: r.t, left: r.l, width: 160, height: 160, marginLeft: -80, marginTop: -80 }}>
+          <div style={{
+            width: "100%", height: "100%", borderRadius: "50%",
+            border: "2px solid rgba(253,230,138,0.6)",
+            animation: "ripple 4s ease-out infinite",
+            animationDelay: r.delay, willChange: "transform, opacity",
+          }} />
+        </div>
+      ))}
+    </div>
   );
 }
 
 function StripeBereiche({ setPage, isMobile }) {
   const cards = [
     {
-      key: "learning",
-      title: "Learning",
-      sub: "Nachhilfe Klasse 1–13",
-      gradient: "linear-gradient(135deg, #6D28D9 0%, #4C1D95 50%, #2D1A6E 100%)",
-      orbs: [
-        { color: "rgba(167,139,250,0.5)", size: 220, top: "-30%", right: "-10%" },
-        { color: "rgba(109,40,217,0.4)", size: 160, bottom: "-20%", left: "10%" },
-        { color: "rgba(196,181,253,0.3)", size: 120, top: "40%", right: "30%" },
-      ],
+      key: "learning", title: "Learning", sub: "Nachhilfe Klasse 1–13",
+      gradient: "linear-gradient(135deg, #6D28D9 0%, #4C1D95 55%, #2D1A6E 100%)",
+      anim: "orbs",
       items: ["Einzelunterricht", "Gruppenunterricht", "Abi-Vorbereitung", "Abi-Night"],
-      icon: BookOpen,
-      cta: () => setPage("learning"),
+      icon: BookOpen, cta: () => setPage("learning"),
     },
     {
-      key: "elearning",
-      title: "eLearning",
-      sub: "Online-Unterricht seit 2020",
-      gradient: "linear-gradient(135deg, #0C4A6E 0%, #0891B2 50%, #06B6D4 100%)",
-      orbs: [
-        { color: "rgba(103,232,249,0.4)", size: 200, top: "-20%", left: "-5%" },
-        { color: "rgba(8,145,178,0.35)", size: 150, bottom: "-15%", right: "15%" },
-        { color: "rgba(165,243,252,0.25)", size: 100, top: "50%", left: "40%" },
-      ],
+      key: "elearning", title: "eLearning", sub: "Online-Unterricht seit 2020",
+      gradient: "linear-gradient(135deg, #0C4A6E 0%, #0891B2 55%, #06B6D4 100%)",
+      anim: "particles",
       items: ["Video-Unterricht", "Digitale Tafel", "Flexible Zeiten", "Alle Fächer"],
-      icon: Monitor,
-      cta: () => setPage("elearning"),
+      icon: Monitor, cta: () => setPage("elearning"),
     },
     {
-      key: "sport",
-      title: "Sport & Freizeit",
-      sub: "Tennis & Training",
-      gradient: "linear-gradient(135deg, #78350F 0%, #D97706 50%, #F59E0B 100%)",
-      orbs: [
-        { color: "rgba(252,211,77,0.45)", size: 200, top: "-15%", right: "5%" },
-        { color: "rgba(217,119,6,0.4)", size: 160, bottom: "-20%", left: "-5%" },
-        { color: "rgba(253,230,138,0.3)", size: 120, top: "45%", left: "35%" },
-      ],
+      key: "sport", title: "Sport & Freizeit", sub: "Tennis & Training",
+      gradient: "linear-gradient(135deg, #78350F 0%, #D97706 55%, #F59E0B 100%)",
+      anim: "ripple",
       items: ["Tennistraining", "Lizenzierte Trainer", "Gruppentraining", "Mehrere Standorte"],
-      icon: Trophy,
-      cta: () => setPage("sport"),
+      icon: Trophy, cta: () => setPage("sport"),
     },
   ];
 
@@ -1112,15 +1162,14 @@ function StripeBereiche({ setPage, isMobile }) {
             className={`clickable reveal reveal-delay-${ci + 1}`}
             onClick={card.cta}
             style={{ borderRadius: 24, overflow: "hidden", cursor: "pointer", minHeight: isMobile ? 320 : 420 }}>
-            <div style={{ position: "relative", background: card.gradient, backgroundSize: "200% 200%", height: "100%", minHeight: "inherit", overflow: "hidden", animation: "gradientShift 8s ease infinite" }}>
-              {/* Animated orbs inside banner */}
-              {card.orbs.map((orb, oi) => (
-                <AnimatedOrb key={oi} {...orb} delay={`${oi * 1.2}s`} animIdx={oi} />
-              ))}
-              {/* Shimmer sweep */}
-              <div style={{ position: "absolute", top: 0, left: 0, width: "40%", height: "100%", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)", animation: "shimmerLine 4s ease-in-out infinite", animationDelay: `${ci * 0.8}s`, pointerEvents: "none" }} />
+            <div style={{ position: "relative", background: card.gradient, height: "100%", minHeight: "inherit", overflow: "hidden" }}>
+              {/* Hintergrund-Animation je nach Typ */}
+              {card.anim === "orbs" && <OrbField />}
+              {card.anim === "particles" && <ParticleField />}
+              {card.anim === "ripple" && <RippleField />}
+
               {/* Dot grid overlay */}
-              <div style={{ position: "absolute", inset: 0, opacity: 0.06, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+              <div style={{ position: "absolute", inset: 0, opacity: 0.06, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px", pointerEvents: "none" }} />
 
               {/* Content */}
               <div style={{ position: "relative", zIndex: 1, padding: isMobile ? 28 : 32, height: "100%", display: "flex", flexDirection: "column" }}>
@@ -1130,7 +1179,6 @@ function StripeBereiche({ setPage, isMobile }) {
                 <div style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 26 : 30, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.15 }}>{card.title}</div>
                 <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 6 }}>{card.sub}</div>
 
-                {/* Feature list */}
                 <div style={{ marginTop: "auto", paddingTop: 24, display: "flex", flexDirection: "column", gap: 8 }}>
                   {card.items.map((item, ii) => (
                     <div key={ii} style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1142,7 +1190,6 @@ function StripeBereiche({ setPage, isMobile }) {
                   ))}
                 </div>
 
-                {/* CTA bottom */}
                 <div style={{ marginTop: 24, display: "inline-flex", alignItems: "center", gap: 8, color: "#fff", fontWeight: 700, fontSize: 15, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", padding: "10px 18px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.25)", alignSelf: "flex-start" }}>
                   Mehr erfahren <ArrowRight size={16} />
                 </div>
