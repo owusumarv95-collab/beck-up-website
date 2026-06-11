@@ -455,11 +455,10 @@ function Drawer({ item, onClose }) {
 
   return (
     <>
-      {/* Backdrop — click to close */}
-      <div className={`drawer-backdrop${closing ? " closing" : ""}`} onClick={close} />
-
-      {/* Panel */}
-      <div className={`drawer-panel${closing ? " closing" : ""}`} ref={panelRef}>
+      {/* Backdrop wraps panel so click-outside works */}
+      <div className={`drawer-backdrop${closing ? " closing" : ""}`} onClick={close}>
+      {/* Panel — stopPropagation prevents closing when clicking inside */}
+      <div className={`drawer-panel${closing ? " closing" : ""}`} ref={panelRef} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div style={{ position: "sticky", top: 0, zIndex: 10, background: C.bgCard, borderBottom: `1px solid ${C.border}`, padding: "20px 28px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -565,6 +564,7 @@ function Drawer({ item, onClose }) {
           {/* CTA — Termin + Kontakt */}
           <DrawerCTA onClose={close} />
         </div>
+      </div>
       </div>
     </>
   );
@@ -895,6 +895,219 @@ function PageHeader({ tag, title, accent, sub, isMobile }) {
 /* ============================================================
    HOME
    ============================================================ */
+/* ============================================================
+   REVIEW CAROUSEL — rotierendes Auto-Slideshow
+   ============================================================ */
+const ALL_REVIEWS = [
+  { name: "Amelie", role: "Google-Rezension ⭐⭐⭐⭐⭐", text: "Super gute Nachhilfe sowohl live als auch online! Vor allem die Abiturvorbereitung kann ich nur empfehlen. Danke Andy!", color: C.violet, tint: C.violetTint },
+  { name: "Luis", role: "Gruppennachhilfe online", text: "Die Aufgaben nochmals durchzugehen, war sehr gut für das Verständnis. Sehr gute Stunde.", color: "#0891B2", tint: "#CFFAFE" },
+  { name: "Daniel", role: "Einzel-Teaching online", text: "Ausführlich, nicht zu schnell und gut strukturiert.", color: C.amber, tint: C.amberTint },
+  { name: "Pia", role: "Einzel-Teaching online", text: "Gute Alternative in dieser Zeit! Hat mir sehr geholfen, danke 🙂", color: C.coral, tint: C.coralTint },
+  { name: "Mohamad Y.", role: "Abi-Night", text: "Es war sehr gut und hilfreich! Ich hoffe wir können es mehrmals wiederholen.", color: "#059669", tint: "#D1FAE5" },
+];
+
+function ReviewCarousel({ isMobile }) {
+  const [active, setActive] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const timerRef = useRef(null);
+
+  const goTo = (idx) => {
+    if (animating) return;
+    setAnimating(true);
+    setTimeout(() => {
+      setActive((idx + ALL_REVIEWS.length) % ALL_REVIEWS.length);
+      setAnimating(false);
+    }, 300);
+  };
+
+  useEffect(() => {
+    timerRef.current = setInterval(() => goTo(active + 1), 4000);
+    return () => clearInterval(timerRef.current);
+  }, [active]);
+
+  const r = ALL_REVIEWS[active];
+
+  return (
+    <section style={{ padding: isMobile ? "64px 0" : "96px 0", background: C.bgWarm, overflow: "hidden" }}>
+      <Container>
+        <div style={{ textAlign: "center", marginBottom: 48 }}>
+          <h2 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, letterSpacing: "-0.03em", color: C.text }}>
+            Was unsere <span className="g-text">Community sagt.</span>
+          </h2>
+        </div>
+
+        {/* Main card */}
+        <div style={{ maxWidth: 680, margin: "0 auto", position: "relative" }}>
+          {/* Decorative bg cards */}
+          <div style={{ position: "absolute", top: 12, left: "5%", right: "5%", bottom: -12, background: C.bgCard, borderRadius: 24, border: `1px solid ${C.border}`, opacity: 0.6, transform: "rotate(-1.5deg)" }} />
+          <div style={{ position: "absolute", top: 6, left: "2%", right: "2%", bottom: -6, background: C.bgCard, borderRadius: 24, border: `1px solid ${C.border}`, opacity: 0.8, transform: "rotate(0.8deg)" }} />
+
+          {/* Active card */}
+          <div style={{
+            position: "relative", background: C.bgCard, borderRadius: 24, padding: isMobile ? "28px 24px" : "40px 44px",
+            border: `1.5px solid ${r.color}30`,
+            boxShadow: `0 20px 60px -16px ${r.color}25`,
+            opacity: animating ? 0 : 1,
+            transform: animating ? "translateY(12px) scale(0.98)" : "translateY(0) scale(1)",
+            transition: "opacity 0.3s ease, transform 0.3s ease",
+          }}>
+            {/* Stars */}
+            <div style={{ display: "flex", gap: 3, marginBottom: 20 }}>
+              {Array(5).fill(0).map((_, i) => <Star key={i} size={18} fill={C.amber} color={C.amber} />)}
+            </div>
+            {/* Quote */}
+            <p style={{ fontFamily: FF.display, fontSize: isMobile ? 18 : 22, fontWeight: 600, lineHeight: 1.55, color: C.text, fontStyle: "italic" }}>
+              „{r.text}"
+            </p>
+            {/* Person */}
+            <div style={{ marginTop: 28, display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: r.tint, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FF.display, fontWeight: 900, fontSize: 20, color: r.color, flexShrink: 0 }}>
+                {r.name[0]}
+              </div>
+              <div>
+                <div style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 16, color: C.text }}>{r.name}</div>
+                <div style={{ fontSize: 13, color: C.textDim }}>{r.role}</div>
+              </div>
+              <div style={{ marginLeft: "auto", padding: "5px 12px", borderRadius: 999, background: r.tint, color: r.color, fontSize: 11, fontWeight: 800, letterSpacing: "1px", textTransform: "uppercase" }}>
+                Verifiziert
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Dots + nav */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 32 }}>
+          <button onClick={() => goTo(active - 1)} style={{ width: 36, height: 36, borderRadius: "50%", background: C.bgCard, border: `1.5px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.textDim, cursor: "pointer", transition: "all 0.2s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = C.violet; e.currentTarget.style.color = C.violet; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textDim; }}>
+            ‹
+          </button>
+          {ALL_REVIEWS.map((_, i) => (
+            <button key={i} onClick={() => goTo(i)} style={{ width: i === active ? 24 : 8, height: 8, borderRadius: 999, background: i === active ? C.violet : C.border, border: "none", cursor: "pointer", transition: "all 0.35s ease", padding: 0 }} />
+          ))}
+          <button onClick={() => goTo(active + 1)} style={{ width: 36, height: 36, borderRadius: "50%", background: C.bgCard, border: `1.5px solid ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: C.textDim, cursor: "pointer", transition: "all 0.2s" }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = C.violet; e.currentTarget.style.color = C.violet; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.border; e.currentTarget.style.color = C.textDim; }}>
+            ›
+          </button>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+/* ============================================================
+   STRIPE-STYLE BEREICHE BANNER — animierte Feature-Karten
+   ============================================================ */
+function AnimatedOrb({ color, size, top, left, right, bottom, delay = "0s" }) {
+  return (
+    <div style={{
+      position: "absolute", width: size, height: size, borderRadius: "50%",
+      background: `radial-gradient(circle, ${color} 0%, transparent 70%)`,
+      top, left, right, bottom,
+      animation: `meshMove ${12 + Math.random() * 8}s ease-in-out infinite`,
+      animationDelay: delay,
+      pointerEvents: "none",
+    }} />
+  );
+}
+
+function StripeBereiche({ setPage, isMobile }) {
+  const cards = [
+    {
+      key: "learning",
+      title: "Learning",
+      sub: "Nachhilfe Klasse 1–13",
+      gradient: "linear-gradient(135deg, #6D28D9 0%, #4C1D95 50%, #2D1A6E 100%)",
+      orbs: [
+        { color: "rgba(167,139,250,0.5)", size: 220, top: "-30%", right: "-10%" },
+        { color: "rgba(109,40,217,0.4)", size: 160, bottom: "-20%", left: "10%" },
+        { color: "rgba(196,181,253,0.3)", size: 120, top: "40%", right: "30%" },
+      ],
+      items: ["Einzelunterricht", "Gruppenunterricht", "Abi-Vorbereitung", "Abi-Night"],
+      icon: BookOpen,
+      cta: () => setPage("learning"),
+    },
+    {
+      key: "elearning",
+      title: "eLearning",
+      sub: "Online-Unterricht seit 2020",
+      gradient: "linear-gradient(135deg, #0C4A6E 0%, #0891B2 50%, #06B6D4 100%)",
+      orbs: [
+        { color: "rgba(103,232,249,0.4)", size: 200, top: "-20%", left: "-5%" },
+        { color: "rgba(8,145,178,0.35)", size: 150, bottom: "-15%", right: "15%" },
+        { color: "rgba(165,243,252,0.25)", size: 100, top: "50%", left: "40%" },
+      ],
+      items: ["Video-Unterricht", "Digitale Tafel", "Flexible Zeiten", "Alle Fächer"],
+      icon: Monitor,
+      cta: () => setPage("elearning"),
+    },
+    {
+      key: "sport",
+      title: "Sport & Freizeit",
+      sub: "Tennis & Training",
+      gradient: "linear-gradient(135deg, #78350F 0%, #D97706 50%, #F59E0B 100%)",
+      orbs: [
+        { color: "rgba(252,211,77,0.45)", size: 200, top: "-15%", right: "5%" },
+        { color: "rgba(217,119,6,0.4)", size: 160, bottom: "-20%", left: "-5%" },
+        { color: "rgba(253,230,138,0.3)", size: 120, top: "45%", left: "35%" },
+      ],
+      items: ["Tennistraining", "Lizenzierte Trainer", "Gruppentraining", "Mehrere Standorte"],
+      icon: Trophy,
+      cta: () => setPage("sport"),
+    },
+  ];
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20 }}>
+      {cards.map((card, ci) => {
+        const Icon = card.icon;
+        return (
+          <div key={card.key}
+            className={`clickable reveal reveal-delay-${ci + 1}`}
+            onClick={card.cta}
+            style={{ borderRadius: 24, overflow: "hidden", cursor: "pointer", minHeight: isMobile ? 320 : 420 }}>
+            <div style={{ position: "relative", background: card.gradient, height: "100%", minHeight: "inherit", overflow: "hidden" }}>
+              {/* Animated orbs inside banner */}
+              {card.orbs.map((orb, oi) => (
+                <AnimatedOrb key={oi} {...orb} delay={`${oi * 1.5}s`} />
+              ))}
+              {/* Dot grid overlay */}
+              <div style={{ position: "absolute", inset: 0, opacity: 0.06, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+
+              {/* Content */}
+              <div style={{ position: "relative", zIndex: 1, padding: isMobile ? 28 : 32, height: "100%", display: "flex", flexDirection: "column" }}>
+                <div style={{ width: 52, height: 52, borderRadius: 14, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", marginBottom: 20 }}>
+                  <Icon size={26} />
+                </div>
+                <div style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 26 : 30, color: "#fff", letterSpacing: "-0.02em", lineHeight: 1.15 }}>{card.title}</div>
+                <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 6 }}>{card.sub}</div>
+
+                {/* Feature list */}
+                <div style={{ marginTop: "auto", paddingTop: 24, display: "flex", flexDirection: "column", gap: 8 }}>
+                  {card.items.map((item, ii) => (
+                    <div key={ii} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <CheckCircle2 size={12} color="#fff" />
+                      </div>
+                      <span style={{ fontSize: 14, color: "rgba(255,255,255,0.9)", fontWeight: 500 }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA bottom */}
+                <div style={{ marginTop: 24, display: "inline-flex", alignItems: "center", gap: 8, color: "#fff", fontWeight: 700, fontSize: 15, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", padding: "10px 18px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.25)", alignSelf: "flex-start" }}>
+                  Mehr erfahren <ArrowRight size={16} />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function Home({ setPage, isMobile, onOpenDrawer }) {
   useReveal();
 
@@ -1028,31 +1241,7 @@ function Home({ setPage, isMobile, onOpenDrawer }) {
             <p style={{ marginTop: 14, fontSize: 16, color: C.textDim, maxWidth: 480 }}>Jede Karte öffnet einen Bereich mit allen Details — einfach antippen.</p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 20 }}>
-            {[
-              { key: "learning", icon: BookOpen, color: C.violet, tint: C.violetTint, title: "Learning", sub: "Persönliche Nachhilfe Klasse 1–13. Einzel, Gruppe, Abi-Night.", cta: () => setPage("learning") },
-              { key: "elearning", icon: Globe, color: "#0891B2", tint: "#CFFAFE", title: "eLearning", sub: "Dieselbe Qualität, von zuhause. Video-Unterricht seit 2020.", cta: () => setPage("elearning") },
-              { key: "sport", icon: Dumbbell, color: C.amber, tint: C.amberTint, title: "Sport & Freizeit", sub: "Tennis, Gruppentraining und Fitness in Remscheid.", cta: () => setPage("sport") },
-            ].map((b, i) => {
-              const Icon = b.icon;
-              return (
-                <div key={b.key} className={`clickable reveal reveal-delay-${i + 1}`} onClick={b.cta}
-                  style={{ background: C.bgCard, border: `1.5px solid ${C.border}`, borderRadius: 22, overflow: "hidden" }}>
-                  <div style={{ height: 6, background: b.color }} />
-                  <div style={{ padding: 28 }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 14, background: b.tint, display: "flex", alignItems: "center", justifyContent: "center", color: b.color, marginBottom: 18 }}>
-                      <Icon size={26} />
-                    </div>
-                    <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 22, color: C.text }}>{b.title}</h3>
-                    <p style={{ marginTop: 8, fontSize: 14.5, lineHeight: 1.65, color: C.textDim }}>{b.sub}</p>
-                    <div style={{ marginTop: 18, display: "inline-flex", alignItems: "center", gap: 6, color: b.color, fontWeight: 700, fontSize: 14 }}>
-                      Mehr erfahren <ArrowRight size={16} />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <StripeBereiche setPage={setPage} isMobile={isMobile} />
         </Container>
       </section>
 
@@ -1086,39 +1275,8 @@ function Home({ setPage, isMobile, onOpenDrawer }) {
         </Container>
       </section>
 
-      {/* ── STIMMEN ── */}
-      <section style={{ padding: isMobile ? "64px 0" : "96px 0", background: C.bgWarm }}>
-        <Container>
-          <div className="reveal" style={{ marginBottom: 40, textAlign: "center" }}>
-            <h2 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 32 : 44, letterSpacing: "-0.03em", color: C.text }}>
-              Was unsere <span className="g-text">Community sagt.</span>
-            </h2>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 18 }}>
-            {[
-              { name: "Amelie", role: "Google-Rezension", text: "Super gute Nachhilfe sowohl live als auch online! Vor allem die Abiturvorbereitung kann ich nur empfehlen. Danke Andy!" },
-              { name: "Luis", role: "Gruppennachhilfe online", text: "Die Aufgaben nochmals durchzugehen, war sehr gut für das Verständnis. Sehr gute Stunde." },
-              { name: "Daniel", role: "Einzel-Teaching online", text: "Ausführlich, nicht zu schnell und gut strukturiert." },
-              { name: "Pia", role: "Einzel-Teaching online", text: "Gute Alternative in dieser Zeit! Hat mir sehr geholfen, danke 🙂" },
-              { name: "Mohamad Y.", role: "Abi-Night", text: "Es war sehr gut und hilfreich! Ich hoffe wir können es mehrmals wiederholen." },
-            ].slice(0, isMobile ? 3 : 5).map((r, i) => (
-              <div key={i} className={`reveal reveal-delay-${Math.min(i + 1, 4)}`} style={{ background: C.bgCard, border: `1px solid ${C.border}`, borderRadius: 20, padding: 24 }}>
-                <div style={{ display: "flex", gap: 2, marginBottom: 14 }}>
-                  {Array(5).fill(0).map((_, s) => <Star key={s} size={15} fill={C.amber} color={C.amber} />)}
-                </div>
-                <p style={{ fontSize: 14.5, lineHeight: 1.7, color: C.textDim, fontStyle: "italic" }}>„{r.text}"</p>
-                <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: C.violetTint, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FF.display, fontWeight: 800, color: C.violet, fontSize: 15 }}>{r.name[0]}</div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 13.5, color: C.text }}>{r.name}</div>
-                    <div style={{ fontSize: 12, color: C.textDimmer }}>{r.role}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Container>
-      </section>
+      {/* ── STIMMEN — rotierend ── */}
+      <ReviewCarousel isMobile={isMobile} />
 
       {/* ── CTA ── */}
       <section style={{ padding: isMobile ? "64px 0" : "96px 0", background: C.violet }}>
