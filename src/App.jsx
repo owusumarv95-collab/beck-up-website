@@ -2505,6 +2505,6 @@ function ButPage({ setPage, isMobile }) {
       </section>
 
       <Footer setPage={setPage} isMobile={isMobile} />
-    </main>
+    </main> 
   );
 }
