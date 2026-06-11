@@ -671,6 +671,7 @@ const NAV_ITEMS = [
   { key: "elearning", label: "eLearning" },
   { key: "sport", label: "Sport & Freizeit" },
   { key: "preise", label: "Preise" },
+  { key: "buchen",  label: "Termin buchen" },
   { key: "kontakt", label: "Kontakt" },
 ];
 
@@ -704,7 +705,7 @@ function Nav({ page, setPage, isMobile }) {
 
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {!isMobile && (
-              <button className="btn-primary" onClick={() => go("kontakt")} style={{ padding: "10px 20px", fontSize: 14 }}>
+              <button className="btn-primary" onClick={() => go("buchen")} style={{ padding: "10px 20px", fontSize: 14 }}>
                 Probestunde <ArrowRight size={15} />
               </button>
             )}
@@ -726,7 +727,7 @@ function Nav({ page, setPage, isMobile }) {
                   {n.label} <ChevronRight size={18} style={{ color: C.textDimmer }} />
                 </button>
               ))}
-              <button className="btn-primary" onClick={() => go("kontakt")} style={{ width: "100%", justifyContent: "center", marginTop: 16 }}>
+              <button className="btn-primary" onClick={() => go("buchen")} style={{ width: "100%", justifyContent: "center", marginTop: 16 }}>
                 Kostenlose Probestunde <ArrowRight size={16} />
               </button>
             </div>
@@ -817,7 +818,7 @@ function Home({ setPage, isMobile, onOpenDrawer }) {
 
               <div className="reveal reveal-delay-3" style={{ marginTop: 32, display: "flex", flexWrap: "wrap", gap: 12 }}>
                 <button className="btn-primary" onClick={() => setPage("learning")}>Zum Nachhilfe-Angebot <ArrowRight size={17} /></button>
-                <button className="btn-outline" onClick={() => setPage("kontakt")}>Kostenlose Probestunde</button>
+                <button className="btn-outline" onClick={() => setPage("buchen")}>Kostenlose Probestunde</button>
               </div>
             </div>
 
@@ -1511,9 +1512,320 @@ export default function App() {
       {page === "kontakt"     && <KontaktPage {...props} />}
       {page === "impressum"   && <ImpressumPage {...props} />}
       {page === "datenschutz" && <DatenschutzPage {...props} />}
+      {page === "buchen"      && <BuchungPage {...props} />}
 
       {drawer && <Drawer item={drawer} onClose={closeDrawer} />}
       {isMobile && <MobileBar setPage={setPage} />}
     </>
+  );
+}
+
+/* ============================================================
+   BUCHUNGSSEITE — Terminbuchung (Cal.com Integration)
+   ============================================================ */
+
+// Cal.com Platzhalter-URL — hier echten Link eintragen:
+const CAL_URL = "https://cal.com/beck-up/probestunde";
+
+const BUCHUNGS_BEREICHE = [
+  {
+    id: "learning",
+    icon: BookOpen,
+    color: C.violet,
+    tint: C.violetTint,
+    title: "Learning",
+    sub: "Nachhilfe vor Ort",
+    faecher: ["Mathematik","Deutsch","Englisch","Physik","Chemie","Biologie","Geschichte","Latein","Französisch","Spanisch","Informatik","Sonstiges"],
+  },
+  {
+    id: "elearning",
+    icon: Monitor,
+    color: "#0891B2",
+    tint: "#CFFAFE",
+    title: "eLearning",
+    sub: "Online-Unterricht",
+    faecher: ["Mathematik","Deutsch","Englisch","Physik","Chemie","Biologie","Geschichte","Latein","Französisch","Spanisch","Informatik","Sonstiges"],
+  },
+  {
+    id: "sport",
+    icon: Trophy,
+    color: C.amber,
+    tint: C.amberTint,
+    title: "Sport & Freizeit",
+    sub: "Tennis & Training",
+    faecher: ["Tennistraining Einzel","Tennistraining Gruppe","Fitness","Sonstiges"],
+  },
+];
+
+function BuchungStep({ n, label, active, done }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, opacity: active || done ? 1 : 0.4, transition: "opacity 0.3s" }}>
+      <div style={{
+        width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
+        background: done ? C.green : active ? C.violet : C.border,
+        color: done || active ? "#fff" : C.textDim,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontWeight: 800, fontSize: 14,
+        transition: "background 0.3s",
+      }}>
+        {done ? <CheckCircle2 size={18} /> : n}
+      </div>
+      <span style={{ fontSize: 13, fontWeight: done || active ? 700 : 500, color: active ? C.violet : done ? C.green : C.textDim }}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function BuchungPage({ setPage, isMobile }) {
+  const [step, setStep] = useState(1); // 1=Bereich, 2=Fach, 3=Kalender
+  const [bereich, setBereich] = useState(null);
+  const [fach, setFach] = useState(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [launched, setLaunched] = useState(false);
+
+  const selectedBereich = BUCHUNGS_BEREICHE.find(b => b.id === bereich);
+
+  const goToCalendly = () => {
+    setLaunched(true);
+    const params = new URLSearchParams({ name, email, notes: `Bereich: ${bereich}, Fach: ${fach}` });
+    window.open(`${CAL_URL}?${params.toString()}`, "_blank");
+  };
+
+  return (
+    <main>
+      {/* Header */}
+      <section style={{ paddingTop: isMobile ? 100 : 136, paddingBottom: isMobile ? 36 : 48, background: `linear-gradient(180deg, ${C.bgWarm} 0%, ${C.bg} 100%)`, borderBottom: `1px solid ${C.border}` }}>
+        <Container>
+          <span className="tag" style={{ background: C.violetTint, color: C.violet, border: `1px solid rgba(109,40,217,0.2)`, marginBottom: 18, display: "inline-flex" }}>
+            Kostenlose Probestunde
+          </span>
+          <h1 style={{ fontFamily: FF.display, fontWeight: 900, fontSize: isMobile ? 36 : 56, letterSpacing: "-0.03em", color: C.text, lineHeight: 1.07 }}>
+            Termin wählen.<br /><span className="g-text">Einfach & schnell.</span>
+          </h1>
+          <p style={{ marginTop: 16, maxWidth: 480, fontSize: 17, lineHeight: 1.65, color: C.textDim }}>
+            Wähle deinen Bereich, dein Fach und deinen Wunschtermin. Die erste Stunde ist komplett kostenlos.
+          </p>
+        </Container>
+      </section>
+
+      <section style={{ padding: isMobile ? "40px 0 80px" : "64px 0 100px", background: C.bg }}>
+        <Container style={{ maxWidth: 820 }}>
+
+          {/* Stepper */}
+          <div style={{ display: "flex", gap: isMobile ? 16 : 32, alignItems: "center", marginBottom: 40, flexWrap: "wrap" }}>
+            <BuchungStep n={1} label="Bereich wählen" active={step === 1} done={step > 1} />
+            <div style={{ flex: 1, height: 2, background: step > 1 ? C.green : C.border, minWidth: 20, transition: "background 0.5s", borderRadius: 2 }} />
+            <BuchungStep n={2} label="Fach & Infos" active={step === 2} done={step > 2} />
+            <div style={{ flex: 1, height: 2, background: step > 2 ? C.green : C.border, minWidth: 20, transition: "background 0.5s", borderRadius: 2 }} />
+            <BuchungStep n={3} label="Termin buchen" active={step === 3} done={launched} />
+          </div>
+
+          {/* ── SCHRITT 1: Bereich wählen ── */}
+          {step === 1 && (
+            <div style={{ animation: "fadeUp 0.4s ease" }}>
+              <h2 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 22 : 28, color: C.text, marginBottom: 8 }}>
+                Für welchen Bereich interessierst du dich?
+              </h2>
+              <p style={{ fontSize: 15, color: C.textDim, marginBottom: 28 }}>Tippe auf eine Karte um weiterzugehen.</p>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)", gap: 16 }}>
+                {BUCHUNGS_BEREICHE.map(b => {
+                  const Icon = b.icon;
+                  return (
+                    <div key={b.id}
+                      className="clickable"
+                      onClick={() => { setBereich(b.id); setStep(2); }}
+                      style={{ background: C.bgCard, border: `2px solid ${bereich === b.id ? b.color : C.border}`, borderRadius: 20, overflow: "hidden" }}
+                    >
+                      <div style={{ height: 5, background: b.color }} />
+                      <div style={{ padding: 24 }}>
+                        <div style={{ width: 50, height: 50, borderRadius: 14, background: b.tint, display: "flex", alignItems: "center", justifyContent: "center", color: b.color, marginBottom: 16 }}>
+                          <Icon size={26} />
+                        </div>
+                        <div style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 20, color: C.text }}>{b.title}</div>
+                        <div style={{ fontSize: 14, color: C.textDim, marginTop: 4 }}>{b.sub}</div>
+                        <div style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 6, color: b.color, fontWeight: 700, fontSize: 13 }}>
+                          Auswählen <ArrowRight size={15} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── SCHRITT 2: Fach + Name/Email ── */}
+          {step === 2 && selectedBereich && (
+            <div style={{ animation: "fadeUp 0.4s ease" }}>
+              <button onClick={() => setStep(1)} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: C.textDim, fontWeight: 600, marginBottom: 28, background: "none", border: "none", cursor: "pointer" }}>
+                ← Zurück
+              </button>
+              <h2 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 22 : 28, color: C.text, marginBottom: 8 }}>
+                Welches Fach? Und wer bist du?
+              </h2>
+              <p style={{ fontSize: 15, color: C.textDim, marginBottom: 28 }}>
+                Diese Angaben helfen uns, den richtigen Tutor für dich zu finden.
+              </p>
+
+              <div style={{ display: "grid", gap: 16 }}>
+                {/* Fach */}
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: C.textDim, display: "block", marginBottom: 10 }}>
+                    Fach / Bereich *
+                  </label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                    {selectedBereich.faecher.map(f => (
+                      <button key={f}
+                        onClick={() => setFach(f)}
+                        style={{
+                          padding: "9px 16px", borderRadius: 999, fontSize: 14, fontWeight: 600, cursor: "pointer",
+                          background: fach === f ? selectedBereich.color : C.bgWarm,
+                          color: fach === f ? "#fff" : C.textDim,
+                          border: `2px solid ${fach === f ? selectedBereich.color : C.border}`,
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Name + Email */}
+                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14, marginTop: 8 }}>
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 700, color: C.textDim, display: "block", marginBottom: 6 }}>Dein Name *</label>
+                    <input
+                      style={{ ...{width:"100%",padding:"12px 16px",borderRadius:12,background:C.bgWarm,border:`1.5px solid ${C.border}`,color:C.text,fontSize:15,outline:"none"} }}
+                      placeholder="Vor- und Nachname"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      onFocus={e => e.target.style.borderColor = C.violet}
+                      onBlur={e => e.target.style.borderColor = C.border}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 13, fontWeight: 700, color: C.textDim, display: "block", marginBottom: 6 }}>E-Mail *</label>
+                    <input
+                      type="email"
+                      style={{ ...{width:"100%",padding:"12px 16px",borderRadius:12,background:C.bgWarm,border:`1.5px solid ${C.border}`,color:C.text,fontSize:15,outline:"none"} }}
+                      placeholder="name@beispiel.de"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      onFocus={e => e.target.style.borderColor = C.violet}
+                      onBlur={e => e.target.style.borderColor = C.border}
+                    />
+                  </div>
+                </div>
+
+                {/* Info-Box */}
+                <div style={{ padding: "14px 18px", borderRadius: 14, background: C.violetTint, border: `1px solid rgba(109,40,217,0.2)`, display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <CheckCircle2 size={18} color={C.violet} style={{ flexShrink: 0, marginTop: 1 }} />
+                  <p style={{ fontSize: 13.5, lineHeight: 1.6, color: C.violet, fontWeight: 500 }}>
+                    Die erste Stunde ist <strong>100% kostenlos</strong> — kein Vertrag, kein Risiko. Du wählst im nächsten Schritt deinen Wunschtermin direkt im Kalender.
+                  </p>
+                </div>
+
+                <button
+                  className="btn-primary"
+                  disabled={!fach || !name || !email}
+                  onClick={() => setStep(3)}
+                  style={{ alignSelf: "flex-start", opacity: (!fach || !name || !email) ? 0.5 : 1, cursor: (!fach || !name || !email) ? "not-allowed" : "pointer" }}
+                >
+                  Weiter zum Termin <ArrowRight size={17} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── SCHRITT 3: Termin buchen ── */}
+          {step === 3 && (
+            <div style={{ animation: "fadeUp 0.4s ease" }}>
+              <button onClick={() => setStep(2)} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: C.textDim, fontWeight: 600, marginBottom: 28, background: "none", border: "none", cursor: "pointer" }}>
+                ← Zurück
+              </button>
+
+              {/* Zusammenfassung */}
+              <div style={{ background: C.bgWarm, borderRadius: 20, padding: 24, border: `1px solid ${C.border}`, marginBottom: 32 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.textDimmer, letterSpacing: "1px", textTransform: "uppercase", marginBottom: 14 }}>Deine Auswahl</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+                  {[
+                    { label: "Bereich", value: selectedBereich?.title },
+                    { label: "Fach", value: fach },
+                    { label: "Name", value: name },
+                  ].map(i => (
+                    <div key={i.label}>
+                      <div style={{ fontSize: 12, color: C.textDimmer, fontWeight: 600 }}>{i.label}</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: C.text, marginTop: 3 }}>{i.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Kalender-Mockup */}
+              {!launched ? (
+                <div style={{ textAlign: "center", padding: isMobile ? "36px 20px" : "56px 40px", background: C.bgCard, borderRadius: 24, border: `2px dashed ${C.border}` }}>
+                  <div style={{ width: 72, height: 72, borderRadius: 20, background: C.violetTint, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", animation: "float 3s ease-in-out infinite" }}>
+                    <Calendar size={36} color={C.violet} />
+                  </div>
+                  <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: isMobile ? 22 : 28, color: C.text }}>
+                    Jetzt freien Termin wählen
+                  </h3>
+                  <p style={{ marginTop: 12, fontSize: 15, lineHeight: 1.65, color: C.textDim, maxWidth: 400, margin: "12px auto 0" }}>
+                    Der Kalender öffnet in einem neuen Fenster. Du siehst sofort welche Zeiten frei sind und kannst direkt buchen.
+                  </p>
+
+                  {/* Fake Slot-Vorschau */}
+                  <div style={{ marginTop: 28, display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
+                    {["Mo 09:00","Mo 14:00","Di 10:00","Di 16:00","Mi 09:00","Mi 15:00","Do 11:00","Fr 14:00"].map((slot, i) => (
+                      <div key={slot} style={{
+                        padding: "8px 16px", borderRadius: 10, fontSize: 13, fontWeight: 700,
+                        background: i % 3 === 0 ? C.violetTint : i % 3 === 1 ? C.amberTint : C.greenTint,
+                        color: i % 3 === 0 ? C.violet : i % 3 === 1 ? C.amber : C.green,
+                        border: `1px solid ${i % 3 === 0 ? "rgba(109,40,217,0.2)" : i % 3 === 1 ? "rgba(217,119,6,0.2)" : "rgba(5,150,105,0.2)"}`,
+                        animation: `float ${3 + i * 0.3}s ease-in-out infinite`,
+                        animationDelay: `${i * 0.15}s`,
+                      }}>
+                        {slot} ✓
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ marginTop: 12, fontSize: 12, color: C.textDimmer }}>Beispiel-Vorschau · echte Termine im Kalender</p>
+
+                  <button className="btn-primary" onClick={goToCalendly} style={{ marginTop: 28, fontSize: 16, padding: "15px 32px" }}>
+                    <Calendar size={18} /> Kalender öffnen & Termin wählen
+                  </button>
+                  <p style={{ marginTop: 10, fontSize: 12, color: C.textDimmer }}>Öffnet in einem neuen Fenster</p>
+                </div>
+              ) : (
+                /* Nach dem Klick */
+                <div style={{ textAlign: "center", padding: isMobile ? "36px 20px" : "56px 40px", background: C.greenTint, borderRadius: 24, border: `2px solid rgba(5,150,105,0.3)` }}>
+                  <CheckCircle2 size={52} color={C.green} style={{ margin: "0 auto 16px" }} />
+                  <h3 style={{ fontFamily: FF.display, fontWeight: 800, fontSize: 26, color: C.text }}>Fast geschafft!</h3>
+                  <p style={{ marginTop: 10, fontSize: 16, lineHeight: 1.65, color: C.textDim, maxWidth: 400, margin: "10px auto 0" }}>
+                    Der Kalender sollte sich geöffnet haben. Wähle dort deinen Wunschtermin aus — du bekommst eine Bestätigung per E-Mail.
+                  </p>
+                  <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+                    <button className="btn-primary" onClick={goToCalendly}>
+                      Kalender nochmal öffnen <ArrowRight size={16} />
+                    </button>
+                    <button className="btn-outline" onClick={() => setPage("home")} style={{ color: C.green, borderColor: C.green }}>
+                      Zur Startseite
+                    </button>
+                  </div>
+                  <p style={{ marginTop: 16, fontSize: 13, color: C.textDimmer }}>
+                    Probleme? Ruf uns an: <a href="tel:+49219171683" style={{ color: C.violet, fontWeight: 700 }}>+49 2191 71683</a>
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+        </Container>
+      </section>
+      <Footer setPage={setPage} isMobile={isMobile} />
+    </main>
   );
 }
